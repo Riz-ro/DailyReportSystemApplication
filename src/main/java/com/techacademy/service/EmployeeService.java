@@ -68,6 +68,29 @@ public class EmployeeService {
         return ErrorKinds.SUCCESS;
     }
 
+    // 従業員更新  1/9 パスワード入力チェック→入力エラーOK。空白処理・正常処理でホワイトラベルエラー、
+    // 名前空欄→エラーコメント出ずに更新画面に戻る
+    @Transactional
+    public ErrorKinds update(String code, Employee employee) {
+
+        // パスワード入力確認
+        if ("".equals(employee.getPassword())) {
+            employee.setPassword(findByCode(code).getPassword());
+        } else {
+            // パスワードチェック　　ここは通ってるっぽい
+            ErrorKinds result = employeePasswordCheck(employee);
+            if (ErrorKinds.CHECK_OK != result) {
+                return result;
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        employee.setUpdatedAt(now);
+
+        employeeRepository.save(employee);
+        return ErrorKinds.SUCCESS;
+    }
+
     // 従業員一覧表示処理
     public List<Employee> findAll() {
         return employeeRepository.findAll();
@@ -118,5 +141,6 @@ public class EmployeeService {
         int passwordLength = employee.getPassword().length();
         return passwordLength < 8 || 16 < passwordLength;
     }
+
 
 }
