@@ -113,20 +113,25 @@ public class EmployeeController {
         return "redirect:/employees";
     }
 
-    // 従業員更新画面　追加
+    // 従業員更新画面 追加
     @GetMapping(value = "/{code}/update")
     public String edit(@PathVariable String code, Model model) {
 
-        model.addAttribute("employee", employeeService.findByCode(code));
+        if (code != null) {
+            model.addAttribute("employee", employeeService.findByCode(code));
+        }
+
         return "employees/update";
     }
 
-    // 従業員更新処理　追加
+    // 従業員更新処理 追加
     @PostMapping(value = "/{code}/update")
-    public String update(@PathVariable String code,@Validated Employee employee, BindingResult res, Model model) {
+    public String update(@Validated Employee employee, BindingResult res, Model model,
+            @PathVariable String code) {
 
         // 入力チェック
         if (res.hasErrors()) {
+            code = null;
             return edit(code, model);
         }
 
@@ -134,12 +139,10 @@ public class EmployeeController {
 
         if (ErrorMessage.contains(result)) {
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
-            model.addAttribute("employee", employeeService.findByCode(code));
             return edit(code, model);
         }
 
         return "redirect:/employees";
     }
-
 
 }

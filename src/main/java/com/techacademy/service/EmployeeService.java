@@ -68,26 +68,37 @@ public class EmployeeService {
         return ErrorKinds.SUCCESS;
     }
 
-    // 従業員更新  1/9 パスワード入力チェック→入力エラーOK。空白処理・正常処理でホワイトラベルエラー、
-    // 名前空欄→エラーコメント出ずに更新画面に戻る
+    // 従業員更新  名前空欄→エラーコメント出ずに更新画面に戻る
     @Transactional
-    public ErrorKinds update(String code, Employee employee) {
+    public ErrorKinds update(String code ,Employee employee) {
+        // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
+        // 更新用Employeeに更新元のデータを入れる
+        Employee updateEmployee = findByCode(code);
 
-        // パスワード入力確認
+        // フォームのパスワードが空白ならDBのパスワードを、そうでなければフォームのデータを更新用Employeeに入れる（パスワード）
         if ("".equals(employee.getPassword())) {
-            employee.setPassword(findByCode(code).getPassword());
+            // パスワードが空白だった場合
+            updateEmployee.setPassword(findByCode(code).getPassword());
         } else {
-            // パスワードチェック　　ここは通ってるっぽい
+            updateEmployee.setPassword(employee.getPassword());
+            // パスワードチェック
             ErrorKinds result = employeePasswordCheck(employee);
             if (ErrorKinds.CHECK_OK != result) {
                 return result;
             }
+            updateEmployee.setPassword(employee.getPassword());
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        employee.setUpdatedAt(now);
+        // フォームのデータを更新用Employeeに入れる（名前・権限）
+        updateEmployee.setName(employee.getName());
+        updateEmployee.setRole(employee.getRole());
 
-        employeeRepository.save(employee);
+        // 更新日時を現在日時に上書き
+        LocalDateTime now = LocalDateTime.now();
+        updateEmployee.setUpdatedAt(now);
+
+        // 更新用Employeeの内容で保存
+        employeeRepository.save(updateEmployee);
         return ErrorKinds.SUCCESS;
     }
 
