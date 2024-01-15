@@ -68,7 +68,7 @@ public class EmployeeService {
         return ErrorKinds.SUCCESS;
     }
 
-    // 従業員更新  名前空欄→エラーコメント出ずに更新画面に戻る
+    // 従業員更新
     @Transactional
     public ErrorKinds update(String code ,Employee employee) {
         // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
