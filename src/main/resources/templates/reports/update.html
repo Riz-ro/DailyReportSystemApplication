@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="h-100" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace="common/header :: head_fragment(title=従業員更新)"></head>
+<head th:replace="common/header :: head_fragment(title=日報更新)"></head>
 
 <body class="h-100 overflow-hidden">
     <div class="row h-100">
@@ -12,54 +12,51 @@
         <div class="mt-3 h-100 col-sm-10">
             <!-- コンテンツ -->
             <div class="container-fluid p-0">
-                <h1 class="h3 mb-3">従業員 更新</h1>
+                <h1 class="h3 mb-3">日報 更新</h1>
             </div>
             <div class="col-12 col-xxl-6">
 
                 <div class="col-xl-12">
                     <div class="card">
-                        <div class="card-header">
-                            パスワードは変更する場合のみ入力してください
-                        </div>
                         <div class="card-body">
-                            <form th:action="@{/employees/{code}/update(code=${code})}" th:object="${employee}" th:method="post">
+                            <form th:action="@{/reports/{id}/update(id=${id})}" th:object="${report}" th:method="post">
                                 <div class="wizard wizard-success mb-4">
                                     <div class="mb-3">
-                                        <label class="form-label" for="code">社員番号</label>
+                                        <label class="form-label" for="reportDate">日付</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-7">
-                                            <input type="hidden" id="code" name="code" th:value="*{code}" th:text="*{code}">
+                                            <input class="form-control" type="date" th:field="*{reportDate}" th:errorclass="err" id="reportDate">
+                                            <span th:errors="*{reportDate}" class="text-danger"></span>
+                                            <span th:if="${reportDateError} neq null" th:text="${reportDateError}" class="text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label" for="name">氏名</label>
+                                        <label class="form-label" for="employee.name">氏名</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-7">
-                                            <input class="form-control" type="text" th:field="*{name}" th:errorclass="err" id="name">
-                                            <span th:errors="*{name}" class="text-danger"></span>
+                                            <input type="hidden" id="employee.name" name="employee.name" th:value="employee.name" th:text="${employeeName}">
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label" for="password">パスワード</label>
+                                        <label class="form-label" for="title">タイトル</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-7">
-                                            <input class="form-control" type="password" th:field="*{password}" th:errorclass="err" id="password">
-                                            <span th:if="${passwordError} neq null" th:text="${passwordError}" class="text-danger"></span>
+                                            <input class="form-control" type="text" th:field="*{title}" th:errorclass="err" id="title">
+                                            <span th:errors="*{title}" class="text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label" for="role">権限</label>
+                                        <label class="form-label" for="content">内容</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-4">
-                                            <select class="form-select" th:field="*{role}" id="role">
-                                                <option th:each="item:${T(com.techacademy.entity.Employee.Role).values()}" th:value="${item}" th:text="${item.getValue()}" th:selected="*{role} == ${item}">
-                                            </select>
+                                            <textarea style="width:175%; height:150px;" class="form-control" type="content" th:field="*{content}" th:errorclass="err" id="content"></textarea>
+                                            <span th:errors="*{content}" class="text-danger"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <p class="mt-5">
                                     <input type="submit" value="更新" class="btn btn-primary">
-                                    <a th:href="@{/employees}" class="btn btn-primary">戻る</a>
+                                    <a th:href="@{/reports}" class="btn btn-primary">戻る</a>
                                 </p>
                             </form>
                         </div>

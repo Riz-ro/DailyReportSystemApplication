@@ -11,7 +11,6 @@ import com.techacademy.constants.ErrorKinds;
 import com.techacademy.entity.Report;
 import com.techacademy.repository.ReportRepository;
 
-
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -26,13 +25,14 @@ public class ReportService {
 
     // 日報保存
     @Transactional
-    public ErrorKinds save(Report report) {
+    public ErrorKinds save(Report report, UserDetail userDetail) {
 
-        // 日報番号重複チェック
-        /*if (findByCode(report.getCode()) != null) {
-            return ErrorKinds.DUPLICATE_ERROR;
+        if (existsByEmployeeAndReportDate(userDetail, report)) {
+            return ErrorKinds.DATECHECK_ERROR;
         }
-        */
+
+        // 社員番号（ログイン中の従業員の社員番号
+        report.setEmployee(userDetail.getEmployee());
 
         report.setDeleteFlg(false);
 
@@ -56,18 +56,21 @@ public class ReportService {
         return ErrorKinds.SUCCESS;
     }
 
-    // 日報更新  名前空欄→エラーコメント出ずに更新画面に戻る
+    // 日報更新
     @Transactional
-    public ErrorKinds update(int id ,Report Report) {
-        // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
+    public ErrorKinds update(int id, Report report, UserDetail userDetail) {
+
+        if (existsByEmployeeAndReportDate(userDetail, report)) {
+            return ErrorKinds.DATECHECK_ERROR;
+        }
+
         // 更新用Reportに更新元のデータを入れる
         Report updateReport = findById(id);
 
-
-        /* フォームのデータを更新用Reportに入れる（名前・権限）
-        updateReport.setName(report.getName());
-        updateReport.setRole(report.getRole());
-        */
+        // フォームのデータを更新用Reportに入れる（日付・タイトル・内容）
+        updateReport.setReportDate(report.getReportDate());
+        updateReport.setTitle(report.getTitle());
+        updateReport.setContent(report.getContent());
 
         // 更新日時を現在日時に上書き
         LocalDateTime now = LocalDateTime.now();
@@ -82,13 +85,11 @@ public class ReportService {
     public List<Report> findAll() {
         return reportRepository.findAll();
     }
-   /*
-    // 日報一覧表示処理
+
+    // 日報一覧表示処理（ログインユーザーのみ）
     public List<Report> findByEmployee(UserDetail userDetail) {
-        List<Report> reportList = reportService.findByEmployee(employee);
-        return reportRepository.findByEmployee(employee);
+        return reportRepository.findByEmployee(userDetail.getEmployee());
     }
-*/
 
     // 1件を検索
     public Report findById(int id) {
@@ -99,5 +100,9 @@ public class ReportService {
         return report;
     }
 
+    // ログイン中のユーザー　かつ　入力した日付　の日報データが日報テーブルにないかの確認
+    public boolean existsByEmployeeAndReportDate(UserDetail userDetail, Report report) {
+        return reportRepository.existsByEmployeeAndReportDate(userDetail.getEmployee(), report.getReportDate());
+    }
 
 }

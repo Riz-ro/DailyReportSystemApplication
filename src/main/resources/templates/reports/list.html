@@ -29,7 +29,7 @@
                                     <tbody>
                                         <tr th:each="report:${reportList}">
                                             <td class="align-middle" th:text="${report.employee.name}"></td>
-                                            <td class="align-middle" th:text="${#temporals.format(report.report_date, 'yyyy-MM-dd')}"></td>
+                                            <td class="align-middle" th:text="${#temporals.format(report.reportDate, 'yyyy-MM-dd')}"></td>
                                             <td class="align-middle" th:text="${report.title}"></td>
                                             <td class="align-middle"><a th:href="@{/reports/{id}/(id=${report.id})}" class="btn btn-primary">詳細</a></td>
                                         </tr>
