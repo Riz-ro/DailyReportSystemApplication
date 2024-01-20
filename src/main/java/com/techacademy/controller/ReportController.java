@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
-
+import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.service.ReportService;
 import com.techacademy.service.UserDetail;
@@ -36,8 +36,7 @@ public class ReportController {
 
         // 【表示制御】
         // 全件検索できるのは管理者権限ユーザーのみ。ifで分岐させ、一般権限ユーザーは自身の一覧データのみを表示させる。
-        // 削除済みデータは表示しない。 最終確認する。
-        if("ADMIN".equals(userDetail.getEmployee().getRole().toString())){
+        if(Employee.Role.ADMIN.equals(userDetail.getEmployee().getRole())){
             // 管理者権限ユーザーは全件取得
             model.addAttribute("listSize", reportService.findAll().size());
             model.addAttribute("reportList", reportService.findAll());
@@ -87,9 +86,9 @@ public class ReportController {
 
     // 日報削除処理
     @PostMapping(value = "/{id}/delete")
-    public String delete(@PathVariable int id, @AuthenticationPrincipal UserDetail userDetail, Model model) {
+    public String delete(@PathVariable int id, Model model) {
 
-        ErrorKinds result = reportService.delete(id, userDetail);
+        ErrorKinds result = reportService.delete(id);
 
         if (ErrorMessage.contains(result)) {
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));

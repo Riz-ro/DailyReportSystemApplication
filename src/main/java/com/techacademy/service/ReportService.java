@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.techacademy.constants.ErrorKinds;
+import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.repository.ReportRepository;
 
@@ -46,7 +47,7 @@ public class ReportService {
 
     // 日報削除
     @Transactional
-    public ErrorKinds delete(int id, UserDetail userDetail) {
+    public ErrorKinds delete(int id) {
 
         Report report = findById(id);
         LocalDateTime now = LocalDateTime.now();
@@ -89,6 +90,11 @@ public class ReportService {
     // 日報一覧表示処理（ログインユーザーのみ）
     public List<Report> findByEmployee(UserDetail userDetail) {
         return reportRepository.findByEmployee(userDetail.getEmployee());
+    }
+
+    // 日報一覧表示処理（従業員削除用）
+    public List<Report> findByEmployee(Employee employee) {
+        return reportRepository.findByEmployee(employee);
     }
 
     // 1件を検索
