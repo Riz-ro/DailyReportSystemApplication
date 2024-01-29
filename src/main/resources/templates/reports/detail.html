@@ -37,7 +37,7 @@
                                     </tr>
                                     <tr>
                                         <th>内容</th>
-                                        <td class="align-middle"><pre th:text="${report.content}"></pre></td>
+                                        <td class="align-middle"><pre th:text="${report.content}" style="width:500px; height:200px; overflow:auto;"></pre></td>
                                     </tr>
                                     <tr>
                                         <th>登録日時</th>
@@ -54,23 +54,20 @@
                                     </div>
                                     <div class="col-auto">
                                         <form name="form" th:action="@{/reports/{id}/delete(id=${id})}" th:method="post">
-                                            <input type="submit" value="削除" class="btn btn-primary">
+                                            <input type="submit" name="reportsDelete" id="reportsDelete" value="削除" class="btn btn-primary">
                                         </form>
+                                        <script th:src="@{/js/reportsDelete.js}"></script>
                                     </div>
-
                                     <div class="col-auto">
                                         <a th:href="@{/reports}" class="btn btn-primary">戻る</a>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 </body>
-
 </html>
