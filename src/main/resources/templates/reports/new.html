@@ -25,23 +25,37 @@
                                         <label class="form-label" for="reportDate">日付</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-7">
-                                            <input class="form-control" type="date" th:field="*{reportDate}" th:errorclass="err" id="reportDate">
+                                            <input class="form-control" type="date" th:field="*{reportDate}"
+                                                th:errorclass="err" id="today">
+                                            <script type="text/javascript">
+                                                window.onload = function () {
+                                                    var today = new Date();
+                                                    today.setDate(today.getDate());
+                                                    var yyyy = today.getFullYear();
+                                                    var mm = ("0" + (today.getMonth() + 1)).slice(-2);
+                                                    var dd = ("0" + today.getDate()).slice(-2);
+                                                    document.getElementById("today").value = yyyy + '-' + mm + '-' + dd;
+                                                }
+                                            </script>
                                             <span th:errors="*{reportDate}" class="text-danger"></span>
-                                            <span th:if="${reportDateError} neq null" th:text="${reportDateError}" class="text-danger"></span>
+                                            <span th:if="${reportDateError} neq null" th:text="${reportDateError}"
+                                                class="text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label" for="employee.name">氏名</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-7">
-                                            <input type="hidden" id="employee.name" name="employee.name" th:value="employee.name" th:text="${employeeName}">
+                                            <input type="hidden" id="employee.name" name="employee.name"
+                                                th:value="employee.name" th:text="${employeeName}">
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label" for="title">タイトル</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-7">
-                                            <input class="form-control" type="text" th:field="*{title}" th:errorclass="err" id="title">
+                                            <input class="form-control" type="text" th:field="*{title}"
+                                                th:errorclass="err" id="title">
                                             <span th:errors="*{title}" class="text-danger"></span>
                                         </div>
                                     </div>
@@ -49,7 +63,9 @@
                                         <label class="form-label" for="content">内容</label>
                                         <p class="mb-1"></p>
                                         <div class="col-md-4">
-                                            <textarea style="width:500px; height:150px;" class="form-control" type="content" th:field="*{content}" th:errorclass="err" id="content"></textarea>
+                                            <textarea style="width:500px; height:150px;" class="form-control"
+                                                type="content" th:field="*{content}" th:errorclass="err"
+                                                id="content"></textarea>
                                             <span th:errors="*{content}" class="text-danger"></span>
                                         </div>
                                     </div>

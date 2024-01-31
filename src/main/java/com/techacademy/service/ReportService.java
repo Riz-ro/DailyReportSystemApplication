@@ -28,11 +28,12 @@ public class ReportService {
     @Transactional
     public ErrorKinds save(Report report, UserDetail userDetail) {
 
+        // 入力チェック（ログインユーザーが同一の日付で登録をしようとしていないか）
         if (existsByEmployeeAndReportDate(userDetail, report)) {
             return ErrorKinds.DATECHECK_ERROR;
         }
 
-        // 社員番号（ログイン中の従業員の社員番号
+        // 社員番号（ログイン中の従業員の社員番号）
         report.setEmployee(userDetail.getEmployee());
 
         report.setDeleteFlg(false);
@@ -60,10 +61,6 @@ public class ReportService {
     // 日報更新
     @Transactional
     public ErrorKinds update(int id, Report report, UserDetail userDetail) {
-
-        if (existsByEmployeeAndReportDate(userDetail, report)) {
-            return ErrorKinds.DATECHECK_ERROR;
-        }
 
         // 更新用Reportに更新元のデータを入れる
         Report updateReport = findById(id);
