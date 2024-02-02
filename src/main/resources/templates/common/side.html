@@ -2,6 +2,11 @@
     <a class="text-decoration-none" th:href="@{/}">
         <span class="text-light p-1">日報管理システム</span>
     </a>
+    <div class="mb-3">
+        <label class="form-label" for="employee.name">ログイン：
+            <input type="hidden" id="employee.name" name="employee.name" th:value="employee.name"
+                th:text="${employeeName}">さん</label>
+    </div>
     <ul class="mt-3 mb-5">
         <li sec:authorize="hasAuthority('ADMIN')">
             <a class="text-light" th:href="@{/employees}">従業員</a>
