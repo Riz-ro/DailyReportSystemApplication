@@ -30,12 +30,6 @@ public class ReportController {
         this.reportService = reportService;
     }
 
-    @ModelAttribute
-    public void addAttributes(@ModelAttribute Employee employee, @AuthenticationPrincipal UserDetail userDetail,
-            Model model) {
-        model.addAttribute("employeeName", userDetail.getEmployee().getName());
-    }
-
     // 日報一覧画面
     @GetMapping
     public String list(@AuthenticationPrincipal UserDetail userDetail, Model model) {

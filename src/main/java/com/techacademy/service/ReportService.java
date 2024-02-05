@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.techacademy.constants.ErrorKinds;
@@ -81,12 +82,13 @@ public class ReportService {
 
     // 日報一覧表示処理
     public List<Report> findAll() {
-        return reportRepository.findAll();
+        return reportRepository
+                .findAll(Sort.by(Sort.Direction.ASC, "reportDate"));
     }
 
     // 日報一覧表示処理（ログインユーザーのみ）
     public List<Report> findByEmployee(UserDetail userDetail) {
-        return reportRepository.findByEmployee(userDetail.getEmployee());
+        return reportRepository.findByEmployeeOrderByReportDateAsc(userDetail.getEmployee());
     }
 
     // 日報一覧表示処理（従業員削除用）
@@ -103,7 +105,7 @@ public class ReportService {
         return report;
     }
 
-    // ログイン中のユーザー　かつ　入力した日付　の日報データが日報テーブルにないかの確認
+    // ログイン中のユーザー かつ 入力した日付 の日報データが日報テーブルにないかの確認
     public boolean existsByEmployeeAndReportDate(UserDetail userDetail, Report report) {
         return reportRepository.existsByEmployeeAndReportDate(userDetail.getEmployee(), report.getReportDate());
     }
