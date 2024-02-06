@@ -2,6 +2,9 @@
 package com.techacademy.entity;
 
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -16,19 +19,19 @@ public class CsvColumn {
     @JsonProperty("社員氏名")
     private String name;
     @JsonProperty("日付")
-    private String reportDate;
+    private LocalDate reportDate;
     @JsonProperty("タイトル")
     private String reportTitle;
     @JsonProperty("内容")
     private String reportContent;
     @JsonProperty("登録日時")
-    private String reportCreated;
+    private LocalDateTime reportCreated;
     @JsonProperty("更新日時")
-    private String reportUpdated;
+    private LocalDateTime reportUpdated;
 
     public CsvColumn () {}
 
-    public CsvColumn (Integer id, String name, String reportDate, String reportTitle, String reportContent, String reportCreated, String reportUpdated) {
+    public CsvColumn (Integer id, String name, LocalDate reportDate, String reportTitle, String reportContent, LocalDateTime reportCreated, LocalDateTime reportUpdated) {
       this.id = id;
       this.name = name;
       this.reportDate = reportDate;

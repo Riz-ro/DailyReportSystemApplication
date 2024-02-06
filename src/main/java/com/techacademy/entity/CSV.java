@@ -1,6 +1,8 @@
 
 package com.techacademy.entity;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.Data;
@@ -13,13 +15,13 @@ public class CSV {
     // 社員氏名
     List<String> name;
     // 日付
-    List<String> reportDate;
+    List<LocalDate> reportDate;
     // タイトル
     List<String> reportTitle;
     // 内容
     List<String> reportContent;
     // 登録日時
-    List<String> reportCreated;
+    List<LocalDateTime> reportCreated;
     // 更新日時
-    List<String> reportUpdated;
+    List<LocalDateTime> reportUpdated;
 }

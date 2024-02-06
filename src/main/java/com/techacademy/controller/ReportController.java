@@ -1,5 +1,6 @@
 package com.techacademy.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -153,13 +155,17 @@ public class ReportController {
         @ResponseBody
         public Object csvDownload(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {
           List<CsvColumn> csvList = new ArrayList<>();
-          for (int i = 0; i < records.getId().size(); i++) { // レコードの数ぶんだけループ回して
+          for (int i = 0; i < records.getId().size(); i++) {
             csvList.add(new CsvColumn(records.getId().get(i), records.getName().get(i), records.getReportDate().get(i), records.getReportTitle().get(i), records.getReportContent().get(i), records.getReportCreated().get(i), records.getReportUpdated().get(i)));
           }
           CsvMapper mapper = new CsvMapper();
           mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
           CsvSchema schema = mapper.schemaFor(CsvColumn.class).withHeader();
           JavaTimeModule javaTimeModule = new JavaTimeModule();
+          javaTimeModule.addDeserializer(
+                  LocalDate.class,
+                  new LocalDateDeserializer(DateTimeFormatter.ISO_DATE)
+          );
           javaTimeModule.addDeserializer(
                   LocalDateTime.class,
                   new LocalDateTimeDeserializer(DateTimeFormatter.ISO_DATE_TIME)
