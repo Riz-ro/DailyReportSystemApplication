@@ -29,9 +29,11 @@
                                     <tbody>
                                         <tr th:each="report:${reportList}">
                                             <td class="align-middle" th:text="${report.employee.name}"></td>
-                                            <td class="align-middle" th:text="${#temporals.format(report.reportDate, 'yyyy-MM-dd')}"></td>
+                                            <td class="align-middle"
+                                                th:text="${#temporals.format(report.reportDate, 'yyyy-MM-dd')}"></td>
                                             <td class="align-middle" th:text="${report.title}"></td>
-                                            <td class="align-middle"><a th:href="@{/reports/{id}/(id=${report.id})}" class="btn btn-primary">詳細</a></td>
+                                            <td class="align-middle"><a th:href="@{/reports/{id}/(id=${report.id})}"
+                                                    class="btn btn-primary">詳細</a></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -41,6 +43,18 @@
                         <div>
                             <a th:href="@{/reports/add}" class="btn btn-primary">登録</a>
                         </div>
+                        <form id="csvform" method="post" th:action="@{/reports/csv}" th:object="${csvForm}">
+                            <div th:each="report:${reportList}">
+                                <input type="hidden" name="id" th:value="${report.id}" />
+                                <input type="hidden" name="name" th:value="${report.employee.name}" />
+                                <input type="hidden" name="reportDate" th:value="${report.reportDate}" />
+                                <input type="hidden" name="reportTitle" th:value="${report.title}" />
+                                <input type="hidden" name="reportContent" th:value="${report.content}" />
+                                <input type="hidden" name="reportCreated" th:value="${report.createdAt}" />
+                                <input type="hidden" name="reportUpdated" th:value="${report.updatedAt}" />
+                            </div>
+                            <button type="submit"class="btn btn-primary">CSV</button>
+                        </form>
                     </div>
                 </div>
             </div>
