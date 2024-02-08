@@ -83,12 +83,12 @@ public class ReportService {
     // 日報一覧表示処理
     public List<Report> findAll() {
         return reportRepository
-                .findAll(Sort.by(Sort.Direction.ASC, "reportDate"));
+                .findAll(Sort.by(Sort.Direction.DESC, "reportDate"));
     }
 
     // 日報一覧表示処理（ログインユーザーのみ）
     public List<Report> findByEmployee(UserDetail userDetail) {
-        return reportRepository.findByEmployeeOrderByReportDateAsc(userDetail.getEmployee());
+        return reportRepository.findByEmployeeOrderByReportDateDesc(userDetail.getEmployee());
     }
 
     // 日報一覧表示処理（従業員削除用）

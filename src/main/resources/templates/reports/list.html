@@ -41,9 +41,7 @@
                         </div>
                         <p class="mb-3" th:text="'（ 全' + ${listSize} + '件 ）'">
                         <div>
-                            <a th:href="@{/reports/add}" class="btn btn-primary">登録</a>
-                        </div>
-                        <form id="csvform" method="post" th:action="@{/reports/csv}" th:object="${csvForm}">
+                        <form id="csvform" method="post" th:action="@{/reports/csvoutput}" th:object="${csvForm}">
                             <div th:each="report:${reportList}">
                                 <input type="hidden" name="id" th:value="${report.id}" />
                                 <input type="hidden" name="name" th:value="${report.employee.name}" />
@@ -53,8 +51,10 @@
                                 <input type="hidden" name="reportCreated" th:value="${report.createdAt}" />
                                 <input type="hidden" name="reportUpdated" th:value="${report.updatedAt}" />
                             </div>
-                            <button type="submit"class="btn btn-primary">CSV</button>
+                            <a th:href="@{/reports/add}" class="btn btn-primary">登録</a>
+                            <button type="submit"class="btn btn-primary">CSV出力</button>
                         </form>
+                        </div>
                     </div>
                 </div>
             </div>

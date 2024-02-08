@@ -150,7 +150,7 @@ public class ReportController {
         return "redirect:/reports";
     }
 
-    @PostMapping(value = "/csv", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
+    @PostMapping(value = "/csvoutput", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
             + "; charset=UTF-8; Content-Disposition: attachment")
         @ResponseBody
         public Object csvDownload(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {

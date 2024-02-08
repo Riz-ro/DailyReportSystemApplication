@@ -3,6 +3,7 @@ package com.techacademy.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.validator.constraints.Length;
@@ -61,10 +62,27 @@ public class Report {
 
     // 登録日時
     @Column(nullable = false)
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
     // 更新日時
     @Column(nullable = false)
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
+    public LocalDateTime getCreatedAt() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime date = createdAt;
+        String text = date.format(formatter);
+        LocalDateTime createdAt = LocalDateTime.parse(text, formatter);
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime date = updatedAt;
+        String text = date.format(formatter);
+        LocalDateTime updatedAt = LocalDateTime.parse(text, formatter);
+        return updatedAt;
+    }
 }
