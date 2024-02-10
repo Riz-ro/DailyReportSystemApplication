@@ -12,6 +12,8 @@ import lombok.Data;
 public class CSV {
     // ID
     List<Integer> id;
+    // 社員コード
+    List<String> code;
     // 社員氏名
     List<String> name;
     // 日付

@@ -1,5 +1,9 @@
 package com.techacademy.controller;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,7 +22,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -150,13 +156,14 @@ public class ReportController {
         return "redirect:/reports";
     }
 
-    @PostMapping(value = "/csvoutput", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
+    // CSV出力処理
+    @PostMapping(value = "/csvexport", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
             + "; charset=UTF-8; Content-Disposition: attachment")
         @ResponseBody
-        public Object csvDownload(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {
+        public Object csvExport(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {
           List<CsvColumn> csvList = new ArrayList<>();
           for (int i = 0; i < records.getId().size(); i++) {
-            csvList.add(new CsvColumn(records.getId().get(i), records.getName().get(i), records.getReportDate().get(i), records.getReportTitle().get(i), records.getReportContent().get(i), records.getReportCreated().get(i), records.getReportUpdated().get(i)));
+            csvList.add(new CsvColumn(records.getId().get(i), records.getCode().get(i), records.getName().get(i), records.getReportDate().get(i), records.getReportTitle().get(i), records.getReportContent().get(i), records.getReportCreated().get(i), records.getReportUpdated().get(i)));
           }
           CsvMapper mapper = new CsvMapper();
           mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -175,4 +182,35 @@ public class ReportController {
           return mapper.writer(schema).writeValueAsString(csvList);
         }
 
+    // CSV入力用
+    @PostMapping(value = "/csvimport")
+    public String csvImport(@RequestParam("file") MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+
+            //読み取ったCSVの行を入れるための変数を作成
+            String line;
+            //ヘッダーレコードを飛ばすためにあらかじめ１行だけ読み取っておく（ない場合は不要）
+            line = br.readLine();
+            //行がNULL（CSVの値がなくなる）になるまで処理を繰り返す
+            while ((line = br.readLine()) != null) {
+            //Stringのsplitメソッドを使用してカンマごとに分割して配列にいれる
+                String[] csvSplit = line.split(",");
+                Report report = new Report();
+                report.setId(Integer.parseInt(csvSplit[0]));
+                report.setEmployee(reportService.findByCode(csvSplit[1]));
+                report.setReportDate(LocalDate.parse(csvSplit[3],DateTimeFormatter.ofPattern("yyyy-[]M-[]d")));
+                report.setTitle(csvSplit[4]);
+                report.setContent(csvSplit[5]);
+                report.setCreatedAt(LocalDateTime.parse(csvSplit[6],DateTimeFormatter.ofPattern("yyyy-[]M-[]d'T'[]H:[]m:[]s")));
+                report.setUpdatedAt(LocalDateTime.parse(csvSplit[7],DateTimeFormatter.ofPattern("yyyy-[]M-[]d'T'[]H:[]m:[]s")));
+                report.setDeleteFlg(false);
+                reportService.save(report);
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "redirect:/reports";
+    }
 }

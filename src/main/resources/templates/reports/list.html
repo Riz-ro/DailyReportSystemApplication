@@ -41,19 +41,25 @@
                         </div>
                         <p class="mb-3" th:text="'（ 全' + ${listSize} + '件 ）'">
                         <div>
-                        <form id="csvform" method="post" th:action="@{/reports/csvoutput}" th:object="${csvForm}">
-                            <div th:each="report:${reportList}">
-                                <input type="hidden" name="id" th:value="${report.id}" />
-                                <input type="hidden" name="name" th:value="${report.employee.name}" />
-                                <input type="hidden" name="reportDate" th:value="${report.reportDate}" />
-                                <input type="hidden" name="reportTitle" th:value="${report.title}" />
-                                <input type="hidden" name="reportContent" th:value="${report.content}" />
-                                <input type="hidden" name="reportCreated" th:value="${report.createdAt}" />
-                                <input type="hidden" name="reportUpdated" th:value="${report.updatedAt}" />
-                            </div>
-                            <a th:href="@{/reports/add}" class="btn btn-primary">登録</a>
-                            <button type="submit"class="btn btn-primary">CSV出力</button>
-                        </form>
+                            <form id="csvform" method="post" th:action="@{/reports/csvexport}" th:object="${csvForm}">
+                                <div th:each="report:${reportList}">
+                                    <input type="hidden" name="id" th:value="${report.id}" />
+                                    <input type="hidden" name="code" th:value="${report.employee.code}" />
+                                    <input type="hidden" name="name" th:value="${report.employee.name}" />
+                                    <input type="hidden" name="reportDate" th:value="${report.reportDate}" />
+                                    <input type="hidden" name="reportTitle" th:value="${report.title}" />
+                                    <input type="hidden" name="reportContent" th:value="${report.content}" />
+                                    <input type="hidden" name="reportCreated" th:value="${report.createdAt}" />
+                                    <input type="hidden" name="reportUpdated" th:value="${report.updatedAt}" />
+                                </div>
+                                <a th:href="@{/reports/add}" class="btn btn-primary">登録</a>
+                                <button type="submit" class="btn btn-primary">CSV出力</button>
+                            </form>
+                            <br>
+                            <form th:action="@{/reports/csvimport}" method="post" enctype="multipart/form-data">
+                                <button type="submit" class="btn btn-primary">CSV入力</button>
+                                <input type="file" name="file">
+                            </form>
                         </div>
                     </div>
                 </div>

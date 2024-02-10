@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
+import com.techacademy.repository.EmployeeRepository;
 import com.techacademy.repository.ReportRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportService {
 
     private final ReportRepository reportRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public ReportService(ReportRepository reportRepository) {
+    public ReportService(ReportRepository reportRepository,EmployeeRepository employeeRepository) {
         this.reportRepository = reportRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     // 日報保存
@@ -103,6 +106,22 @@ public class ReportService {
         // 取得できなかった場合はnullを返す
         Report report = option.orElse(null);
         return report;
+    }
+
+    // employee1件を検索
+    public Employee findByCode(String code) {
+        // findByIdで検索
+        Optional<Employee> option = employeeRepository.findById(code);
+        // 取得できなかった場合はnullを返す
+        Employee employee = option.orElse(null);
+        return employee;
+    }
+
+    // 日報インポート
+    @Transactional
+    public void save(Report report) {
+        Report importReport = report;
+        reportRepository.save(importReport);
     }
 
     // ログイン中のユーザー かつ 入力した日付 の日報データが日報テーブルにないかの確認

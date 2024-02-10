@@ -168,5 +168,13 @@ public class EmployeeService {
         return passwordLength < 8 || 16 < passwordLength;
     }
 
+    // CSV入力用
+    public Employee findByEmployee(String code) {
+            // findByIdで検索
+            Optional<Employee> option = employeeRepository.findById(code);
+            // 取得できなかった場合はnullを返す
+            Employee employee = option.orElse(null);
+            return employee;
+    }
 
 }
