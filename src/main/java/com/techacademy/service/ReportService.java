@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
 
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
-import com.techacademy.repository.EmployeeRepository;
 import com.techacademy.repository.ReportRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportService {
 
     private final ReportRepository reportRepository;
-    private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public ReportService(ReportRepository reportRepository,EmployeeRepository employeeRepository) {
+    public ReportService(ReportRepository reportRepository) {
         this.reportRepository = reportRepository;
-        this.employeeRepository = employeeRepository;
     }
 
     // 日報保存
@@ -89,9 +88,20 @@ public class ReportService {
                 .findAll(Sort.by(Sort.Direction.DESC, "reportDate"));
     }
 
+    // 日報一覧表示処理ページング処理追加
+    public Page<Report> findAll(Pageable pageable) {
+        return reportRepository
+                .findAllByOrderByReportDateDesc(pageable);
+    }
+
     // 日報一覧表示処理（ログインユーザーのみ）
     public List<Report> findByEmployee(UserDetail userDetail) {
         return reportRepository.findByEmployeeOrderByReportDateDesc(userDetail.getEmployee());
+    }
+
+    // 日報一覧表示処理（ログインユーザーのみ）ページング処理追加
+    public Page<Report> findByEmployee(UserDetail userDetail, Pageable pageable) {
+        return reportRepository.findByEmployeeOrderByReportDateDesc(userDetail.getEmployee(), pageable);
     }
 
     // 日報一覧表示処理（従業員削除用）
@@ -106,15 +116,6 @@ public class ReportService {
         // 取得できなかった場合はnullを返す
         Report report = option.orElse(null);
         return report;
-    }
-
-    // employee1件を検索
-    public Employee findByCode(String code) {
-        // findByIdで検索
-        Optional<Employee> option = employeeRepository.findById(code);
-        // 取得できなかった場合はnullを返す
-        Employee employee = option.orElse(null);
-        return employee;
     }
 
     // 日報インポート

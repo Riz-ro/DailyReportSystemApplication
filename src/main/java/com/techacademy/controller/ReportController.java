@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -55,18 +57,25 @@ public class ReportController {
 
     // 日報一覧画面
     @GetMapping
-    public String list(@AuthenticationPrincipal UserDetail userDetail, Model model) {
+    public String list(@AuthenticationPrincipal UserDetail userDetail, Model model, Pageable pageable) {
 
         // 【表示制御】
         // 全件検索できるのは管理者権限ユーザーのみ。ifで分岐させ、一般権限ユーザーは自身の一覧データのみを表示させる。
         if(Employee.Role.ADMIN.equals(userDetail.getEmployee().getRole())){
-            // 管理者権限ユーザーは全件取得
+            // 管理者権限ユーザーは全件取得(ページ情報つきの検索)
+            Page<Report> pageList = reportService.findAll(pageable);
+            // ビューに渡す際、Page型の変数をそのまま渡しても実装可能だが、記載が複雑になるのでレコード情報だけを別にわたすことで可読性があがる。
+            List<Report> reportList = pageList.getContent();
+            model.addAttribute("pages", pageList);
             model.addAttribute("listSize", reportService.findAll().size());
-            model.addAttribute("reportList", reportService.findAll());
+            model.addAttribute("reportList", reportList);
         } else {
             // 一般ユーザーは自身のデータのみ取得
+            Page<Report> pageList = reportService.findByEmployee(userDetail, pageable);
+            List<Report> reportList = pageList.getContent();
+            model.addAttribute("pages", pageList);
             model.addAttribute("listSize", reportService.findByEmployee(userDetail).size());
-            model.addAttribute("reportList", reportService.findByEmployee(userDetail));
+            model.addAttribute("reportList", reportList);
         }
 
         return "reports/list";
@@ -198,7 +207,9 @@ public class ReportController {
                 String[] csvSplit = line.split(",");
                 Report report = new Report();
                 report.setId(Integer.parseInt(csvSplit[0]));
-                report.setEmployee(reportService.findByCode(csvSplit[1]));
+                Employee employee = new Employee();
+                employee.setCode(csvSplit[1]);
+                report.setEmployee(employee);
                 report.setReportDate(LocalDate.parse(csvSplit[3],DateTimeFormatter.ofPattern("yyyy-[]M-[]d")));
                 report.setTitle(csvSplit[4]);
                 report.setContent(csvSplit[5]);
