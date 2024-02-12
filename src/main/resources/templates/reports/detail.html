@@ -25,7 +25,8 @@
                                 <table class="table table-striped">
                                     <tr>
                                         <th class="w-25">日付</th>
-                                        <td class="align-middle" th:text="${#temporals.format(report.reportDate, 'yyyy-MM-dd')}"></td>
+                                        <td class="align-middle"
+                                            th:text="${#temporals.format(report.reportDate, 'yyyy-MM-dd')}"></td>
                                     </tr>
                                     <tr>
                                         <th>氏名</th>
@@ -37,31 +38,55 @@
                                     </tr>
                                     <tr>
                                         <th>内容</th>
-                                        <td class="align-middle"><pre th:text="${report.content}" style="width:500px; height:200px; overflow:auto;"></pre></td>
+                                        <td class="align-middle">
+                                            <pre th:text="${report.content}"
+                                                style="width:500px; height:200px; overflow:auto;"></pre>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th>登録日時</th>
-                                        <td class="align-middle" th:text="${#temporals.format(report.createdAt, 'yyyy-MM-dd hh:mm:ss')}"></td>
+                                        <td class="align-middle"
+                                            th:text="${#temporals.format(report.createdAt, 'yyyy-MM-dd hh:mm:ss')}">
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th>更新日時</th>
-                                        <td class="align-middle" th:text="${#temporals.format(report.updatedAt, 'yyyy-MM-dd hh:mm:ss')}"></td>
+                                        <td class="align-middle"
+                                            th:text="${#temporals.format(report.updatedAt, 'yyyy-MM-dd hh:mm:ss')}">
+                                        </td>
                                     </tr>
                                 </table>
                                 <div class="mt-5 row g-1">
                                     <div class="col-auto">
-                                        <a th:href="@{/reports/{id}/update(id=${report.id})}" class="btn btn-primary">更新</a>
+                                        <a th:href="@{/reports/{id}/update(id=${report.id})}"
+                                            class="btn btn-primary">更新</a>
                                     </div>
                                     <div class="col-auto">
-                                        <form name="form" th:action="@{/reports/{id}/delete(id=${id})}" th:method="post">
-                                            <input type="submit" name="reportsDelete" id="reportsDelete" value="削除" class="btn btn-primary">
+                                        <form name="form" th:action="@{/reports/{id}/delete(id=${id})}"
+                                            th:method="post">
+                                            <input type="submit" name="reportsDelete" id="reportsDelete" value="削除"
+                                                class="btn btn-primary">
                                         </form>
                                         <script th:src="@{/js/reportsDelete.js}"></script>
                                     </div>
                                     <div class="col-auto">
                                         <a th:href="@{/reports}" class="btn btn-primary">戻る</a>
                                     </div>
+                                    <div class="col-auto">
+                                        <form id="wordform" method="post" th:action="@{/reports/docx}"
+                                            th:object="${report}">
+                                            <input type="hidden" name="reportDate" th:field="*{reportDate}" />
+                                            <input type="hidden" id="employee.name" name="employee.name"
+                                                th:value="${report.employee.name}">
+                                            <input type="hidden" name="reportTitle" th:field="*{title}">
+                                            <input type="hidden" name="reportContent" th:field="*{content}">
+                                            <input type="hidden" name="reportCreated" th:field="*{createdAt}" />
+                                            <input type="hidden" name="reportUpdated" th:field="*{updatedAt}" />
+                                            <button type="submit" class="btn btn-primary">word出力</button>
+                                        </form>
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -70,4 +95,5 @@
         </div>
     </div>
 </body>
+
 </html>
