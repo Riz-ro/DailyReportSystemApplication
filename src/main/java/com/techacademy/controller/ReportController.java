@@ -12,12 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.net.URLEncoder;
 
-import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
-import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -245,47 +240,8 @@ public class ReportController {
         final String encodedFilename = URLEncoder.encode("report.docx", "UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename);
 
-        XWPFDocument document = null;
-
+        XWPFDocument document = ReportDOCX.DOCXCreate(report);
         try {
-            document = new XWPFDocument();
-            XWPFParagraph paragraph = document.createParagraph();
-            paragraph.setAlignment(ParagraphAlignment.CENTER);
-            paragraph.setIndentationLeft(4*200);
-            XWPFRun run = paragraph.createRun();
-            run.setFontFamily("BIZ UDPゴシック");
-            run.setFontSize(22);  // フォントサイズ
-            run.setColor("ff0000");  // 文字色
-            run.setBold(true);  // 太字
-            run.setItalic(true);  // イタリック
-            run.setUnderline(UnderlinePatterns.SINGLE);  // 下線
-            run.setText("日報 詳細");
-            run.addCarriageReturn();    //改行
-
-            XWPFTable table = document.createTable(6, 2); // 縦:6、横:2
-            String[] item = {"日付","氏名","タイトル","内容","登録日時","更新日時"};
-
-            String ReportDateStr = report.getReportDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            String CreatedAtStr = report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-            String UpdatedAtStr = report.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-            String[] itemList = {ReportDateStr, report.getEmployee().getName(), report.getTitle(), report.getContent(), CreatedAtStr, UpdatedAtStr};
-
-            for (int i = 0; i < 6; i++) {
-                for (int j = 0; j < 2; j++) {
-                    if (j == 0) {   // 項目名セット
-                        paragraph = table.getRow(i).getCell(j).addParagraph();
-                        run = paragraph.createRun();
-                        run.setFontFamily("BIZ UDPゴシック");
-                        run.setText(item[i]);
-                    } else {        // Reportデータ格納
-                        paragraph = table.getRow(i).getCell(j).addParagraph();
-                        run = paragraph.createRun();
-                        run.setFontFamily("BIZ UDPゴシック");
-                        run.setText(itemList[i]);
-                    }
-                }
-            }
-            //ファイル出力
             response.setContentType("application/msword");
             document.write(response.getOutputStream());
         }

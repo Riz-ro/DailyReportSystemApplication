@@ -2,7 +2,6 @@
 <html class="h-100" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 
 <head th:replace="common/header :: head_fragment(title=日報一覧)">
-    <link rel="stylesheet" type="text/css" href="./css/pagelink.css" />
 </head>
 
 <body class="h-100 overflow-hidden">
@@ -41,6 +40,7 @@
                             </div>
                         </div>
                         <p class="mb-3" th:text="'（ 全' + ${listSize} + '件 ）'">
+                            <!-- ボタン等配置 -->
                         <div class="flex">
                             <div>
                                 <form id="csvform" method="post" th:action="@{/reports/csvexport}"
@@ -68,20 +68,19 @@
                             <div>
                                 <!-- ページリンク -->
                                 <ul>
-                                    <li style="display:inline-flex" list-style-type="none" margin-left="auto">
+                                    <li>
                                         <span th:if="${pages.first}">&lt;&lt;</span>
                                         <a th:if="${not pages.first}" th:href="@{${url}(page=0)}">&lt;&lt;</a>
                                     </li>
                                     <!-- 中間のページリンク -->
-                                    <li style="display:inline-flex" list-style-type="none"
-                                        th:each="i:${#numbers.sequence(0, pages.totalPages-1)}">
+                                    <li th:each="i:${#numbers.sequence(0, pages.totalPages-1)}">
                                         <span th:if="${i}==${pages.number}" th:text="${i+1}"></span>
                                         <a th:if="${i}!=${pages.number}" th:href="@{${url}(page=${i})}">
                                             <span th:text="${i+1}"></span>
                                         </a>
                                     </li>
                                     <!-- 末尾のページリンク -->
-                                    <li style="display:inline-flex" list-style-type="none">
+                                    <li>
                                         <span th:if="${pages.last}">&gt;&gt;</span>
                                         <a th:if="${not pages.last}" th:href="@{${url}(page=(${pages.totalPages-1}))}">
                                             &gt;&gt;
@@ -90,25 +89,6 @@
                                 </ul>
                             </div>
                         </div>
-                        <style>
-                            .flex {
-                                display: flex;
-                                width: 90%;
-                                margin: 10px;
-                            }
-
-                            /* .flex直下の子要素 */
-                            .flex>div {
-                                word-break: break-all;
-                                overflow-wrap: anywhere;
-                                margin: 2px;
-                            }
-
-                            /* .flex直下の子要素の最後の子要素 */
-                            .flex>div:last-child {
-                                margin-left: auto;
-                            }
-                        </style>
                     </div>
                 </div>
             </div>

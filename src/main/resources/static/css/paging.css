@@ -1,0 +1,36 @@
+@charset "UTF-8";
+.flex {
+    display: flex;
+    width: 90%;
+    margin: 10px;
+}
+
+/* .flex直下の子要素 */
+.flex>div {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    margin: 2px;
+}
+/* .flex直下の子要素の最後の子要素 */
+.flex>div:last-child {
+    margin-left: auto;
+}
+
+.flex>div>ul {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 1rem;
+    list-style-type: none;
+}
+
+.flex>div>ul>li {
+    display: inline-block;
+}
+
+.paging.current, paging a {
+    padding: 0 3px;
+}
+
+.flex>div>ul>li>a.paging {
+    display: block;
+}
