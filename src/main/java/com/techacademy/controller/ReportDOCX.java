@@ -80,9 +80,9 @@ public class ReportDOCX {
 
         String[] item = { "日付", "氏名", "タイトル", "内容", "登録日時", "更新日時" };
 
-        String ReportDateStr = report.getReportDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String CreatedAtStr = report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-        String UpdatedAtStr = report.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String ReportDateStr = report.getReportDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String CreatedAtStr = report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
+        String UpdatedAtStr = report.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
         String[] itemList = { ReportDateStr, report.getEmployee().getName(), report.getTitle(), report.getContent(),
                 CreatedAtStr, UpdatedAtStr };
 

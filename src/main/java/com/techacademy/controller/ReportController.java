@@ -1,16 +1,12 @@
 package com.techacademy.controller;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.net.URLEncoder;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +27,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
 import com.techacademy.entity.CSV;
@@ -67,7 +63,7 @@ public class ReportController {
 
         // 【表示制御】
         // 全件検索できるのは管理者権限ユーザーのみ。ifで分岐させ、一般権限ユーザーは自身の一覧データのみを表示させる。
-        if(Employee.Role.ADMIN.equals(userDetail.getEmployee().getRole())){
+        if (Employee.Role.ADMIN.equals(userDetail.getEmployee().getRole())) {
             // 管理者権限ユーザーは全件取得(ページ情報つきの検索)
             Page<Report> pageList = reportService.findAll(pageable);
             // ビューに渡す際、Page型の変数をそのまま渡しても実装可能だが、記載が複雑になるのでレコード情報だけを別にわたすことで可読性があがる。
@@ -75,6 +71,7 @@ public class ReportController {
             model.addAttribute("pages", pageList);
             model.addAttribute("listSize", reportService.findAll().size());
             model.addAttribute("reportList", reportList);
+            model.addAttribute("allReportList", reportService.findAll());
         } else {
             // 一般ユーザーは自身のデータのみ取得
             Page<Report> pageList = reportService.findByEmployee(userDetail, pageable);
@@ -82,6 +79,7 @@ public class ReportController {
             model.addAttribute("pages", pageList);
             model.addAttribute("listSize", reportService.findByEmployee(userDetail).size());
             model.addAttribute("reportList", reportList);
+            model.addAttribute("allReportList", reportService.findByEmployee(userDetail));
         }
 
         return "reports/list";
@@ -105,7 +103,8 @@ public class ReportController {
 
     // 日報新規登録処理
     @PostMapping(value = "/add")
-    public String add(@Validated Report report, BindingResult res, @AuthenticationPrincipal UserDetail userDetail, Model model) {
+    public String add(@Validated Report report, BindingResult res, @AuthenticationPrincipal UserDetail userDetail,
+            Model model) {
 
         // 入力チェック
         if (res.hasErrors()) {
@@ -152,7 +151,8 @@ public class ReportController {
 
     // 日報更新処理 追加
     @PostMapping(value = "/{id}/update")
-    public String update(@Validated Report report, BindingResult res, @AuthenticationPrincipal UserDetail userDetail, Model model, @PathVariable int id) {
+    public String update(@Validated Report report, BindingResult res, @AuthenticationPrincipal UserDetail userDetail,
+            Model model, @PathVariable int id) {
 
         // 入力チェック
         if (res.hasErrors()) {
@@ -174,60 +174,24 @@ public class ReportController {
     // CSV出力処理
     @PostMapping(value = "/csvexport", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
             + "; charset=UTF-8; Content-Disposition: attachment")
-        @ResponseBody
-        public Object csvExport(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {
-          List<CsvColumn> csvList = new ArrayList<>();
-          for (int i = 0; i < records.getId().size(); i++) {
-            csvList.add(new CsvColumn(records.getId().get(i), records.getCode().get(i), records.getName().get(i), records.getReportDate().get(i), records.getReportTitle().get(i), records.getReportContent().get(i), records.getReportCreated().get(i), records.getReportUpdated().get(i)));
-          }
-          CsvMapper mapper = new CsvMapper();
-          mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-          CsvSchema schema = mapper.schemaFor(CsvColumn.class).withHeader();
-          JavaTimeModule javaTimeModule = new JavaTimeModule();
-          javaTimeModule.addDeserializer(
-                  LocalDate.class,
-                  new LocalDateDeserializer(DateTimeFormatter.ISO_DATE)
-          );
-          javaTimeModule.addDeserializer(
-                  LocalDateTime.class,
-                  new LocalDateTimeDeserializer(DateTimeFormatter.ISO_DATE_TIME)
-          );
-          mapper.registerModule(javaTimeModule);
-
-          return mapper.writer(schema).writeValueAsString(csvList);
-        }
+    @ResponseBody
+    public Object csvExport(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {
+        List<CsvColumn> csvList = reportService.csvExport(records);
+        CsvMapper mapper = new CsvMapper();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        CsvSchema schema = mapper.schemaFor(CsvColumn.class).withHeader();
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ISO_DATE));
+        javaTimeModule.addDeserializer(LocalDateTime.class,
+                new LocalDateTimeDeserializer(DateTimeFormatter.ISO_DATE_TIME));
+        mapper.registerModule(javaTimeModule);
+        return mapper.writer(schema).writeValueAsString(csvList);
+    }
 
     // CSV入力用
     @PostMapping(value = "/csvimport")
     public String csvImport(@RequestParam("file") MultipartFile file) {
-        try (InputStream inputStream = file.getInputStream();
-                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
-
-            //読み取ったCSVの行を入れるための変数を作成
-            String line;
-            //ヘッダーレコードを飛ばすためにあらかじめ１行だけ読み取っておく（ない場合は不要）
-            line = br.readLine();
-            //行がNULL（CSVの値がなくなる）になるまで処理を繰り返す
-            while ((line = br.readLine()) != null) {
-            //Stringのsplitメソッドを使用してカンマごとに分割して配列にいれる
-                String[] csvSplit = line.split(",");
-                Report report = new Report();
-                report.setId(Integer.parseInt(csvSplit[0]));
-                Employee employee = new Employee();
-                employee.setCode(csvSplit[1]);
-                report.setEmployee(employee);
-                report.setReportDate(LocalDate.parse(csvSplit[3],DateTimeFormatter.ofPattern("yyyy-[]M-[]d")));
-                report.setTitle(csvSplit[4]);
-                report.setContent(csvSplit[5]);
-                report.setCreatedAt(LocalDateTime.parse(csvSplit[6],DateTimeFormatter.ofPattern("yyyy-[]M-[]d'T'[]H:[]m:[]s")));
-                report.setUpdatedAt(LocalDateTime.parse(csvSplit[7],DateTimeFormatter.ofPattern("yyyy-[]M-[]d'T'[]H:[]m:[]s")));
-                report.setDeleteFlg(false);
-                reportService.save(report);
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        reportService.csvImport(file);
         return "redirect:/reports";
     }
 
@@ -235,7 +199,7 @@ public class ReportController {
     @PostMapping(value = "/docx", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @ResponseBody
     public void DOCXWrite(@ModelAttribute Report report, Map<String, Object> model, HttpServletRequest request,
-            HttpServletResponse response) throws Exception{
+            HttpServletResponse response) throws Exception {
 
         final String encodedFilename = URLEncoder.encode("report.docx", "UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename);
@@ -244,13 +208,11 @@ public class ReportController {
         try {
             response.setContentType("application/msword");
             document.write(response.getOutputStream());
-        }
-        finally {
+        } finally {
             if (document != null) {
                 try {
                     document.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                 }
             }
         }
