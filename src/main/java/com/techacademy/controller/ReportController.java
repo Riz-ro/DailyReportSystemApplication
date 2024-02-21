@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.net.URLEncoder;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
 import com.techacademy.entity.CSV;
@@ -180,11 +174,6 @@ public class ReportController {
         CsvMapper mapper = new CsvMapper();
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         CsvSchema schema = mapper.schemaFor(CsvColumn.class).withHeader();
-        JavaTimeModule javaTimeModule = new JavaTimeModule();
-        javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ISO_DATE));
-        javaTimeModule.addDeserializer(LocalDateTime.class,
-                new LocalDateTimeDeserializer(DateTimeFormatter.ISO_DATE_TIME));
-        mapper.registerModule(javaTimeModule);
         return mapper.writer(schema).writeValueAsString(csvList);
     }
 

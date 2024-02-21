@@ -132,9 +132,20 @@ public class ReportService {
     public List<CsvColumn> csvExport(CSV records) throws JsonProcessingException {
         List<CsvColumn> csvList = new ArrayList<>();
         for (int i = 0; i < records.getId().size(); i++) {
+            String strReportDate = records.getReportDate().get(i).replace("-", "/");
+            String strReportCreated = records.getReportCreated().get(i).replace("-", "/").replace("T", " ");
+            int RClength = strReportCreated.length();
+            if (RClength == 16) {
+                strReportCreated = strReportCreated + ":00";
+            }
+            String strReportUpdated = records.getReportUpdated().get(i).replace("-", "/").replace("T", " ");
+            int RUlength = strReportUpdated.length();
+            if (RUlength == 16) {
+                strReportUpdated = strReportUpdated + ":00";
+            }
             csvList.add(new CsvColumn(records.getId().get(i), records.getCode().get(i), records.getName().get(i),
-                    records.getReportDate().get(i), records.getReportTitle().get(i), records.getReportContent().get(i),
-                    records.getReportCreated().get(i), records.getReportUpdated().get(i)));
+                    strReportDate, records.getReportTitle().get(i), records.getReportContent().get(i),
+                    strReportCreated, strReportUpdated));
         }
         return  csvList;
     }
@@ -161,10 +172,12 @@ public class ReportService {
                 report.setReportDate(LocalDate.parse(csvSplit[3], DateTimeFormatter.ofPattern("yyyy/[]M/[]d")));
                 report.setTitle(csvSplit[4]);
                 report.setContent(csvSplit[5]);
+                String strReportCreated = csvSplit[6].substring(1,20);
                 report.setCreatedAt(
-                        LocalDateTime.parse(csvSplit[6], DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
+                        LocalDateTime.parse(strReportCreated, DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
+                String strReportUpdated = csvSplit[7].substring(1,20);
                 report.setUpdatedAt(
-                        LocalDateTime.parse(csvSplit[7], DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
+                        LocalDateTime.parse(strReportUpdated, DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
                 report.setDeleteFlg(false);
                 reportRepository.save(report);
             }
