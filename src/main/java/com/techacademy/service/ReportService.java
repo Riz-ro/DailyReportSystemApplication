@@ -171,11 +171,11 @@ public class ReportService {
                 report.setEmployee(employee);
                 report.setReportDate(LocalDate.parse(csvSplit[3], DateTimeFormatter.ofPattern("yyyy/[]M/[]d")));
                 report.setTitle(csvSplit[4]);
-                report.setContent(csvSplit[5]);
-                String strReportCreated = csvSplit[6].substring(1,20);
+                report.setContent(csvSplit[5].replaceAll("^\"" , "").replaceAll("\"$" , ""));
+                String strReportCreated = csvSplit[6].replaceAll("^\"" , "").replaceAll("\"$" , "");
                 report.setCreatedAt(
                         LocalDateTime.parse(strReportCreated, DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
-                String strReportUpdated = csvSplit[7].substring(1,20);
+                String strReportUpdated = csvSplit[7].replaceAll("^\"" , "").replaceAll("\"$" , "");
                 report.setUpdatedAt(
                         LocalDateTime.parse(strReportUpdated, DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
                 report.setDeleteFlg(false);

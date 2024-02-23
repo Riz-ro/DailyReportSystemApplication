@@ -35,7 +35,7 @@ public class Report {
     // 日付
     @NotNull
     @Column(nullable = false)
-    @DateTimeFormat(pattern = "yyyy/MM/dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate reportDate;
 
     // タイトル
