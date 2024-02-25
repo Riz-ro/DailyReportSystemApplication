@@ -30,7 +30,7 @@
                                     </tr>
                                     <tr>
                                         <th>氏名</th>
-                                        <td class="align-middle" th:text="${report.employee.name}"></td>
+                                        <td class="align-middle" th:text="${report.employee.deleteFlg == false} ? ${report.employee.name} : ${report.employee.name} + '（削除従業員）'"></td>
                                     </tr>
                                     <tr>
                                         <th>タイトル</th>

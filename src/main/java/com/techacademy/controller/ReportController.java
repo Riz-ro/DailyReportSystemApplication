@@ -30,8 +30,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
-import com.techacademy.entity.CSV;
-import com.techacademy.entity.CsvColumn;
+import com.techacademy.entity.ReportCSV;
+import com.techacademy.entity.ReportCsvColumn;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.service.ReportService;
@@ -169,11 +169,11 @@ public class ReportController {
     @PostMapping(value = "/csvexport", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
             + "; charset=UTF-8; Content-Disposition: attachment")
     @ResponseBody
-    public Object csvExport(@ModelAttribute("csvForm") CSV records) throws JsonProcessingException {
-        List<CsvColumn> csvList = reportService.csvExport(records);
+    public Object csvExport(@ModelAttribute("csvForm") ReportCSV records) throws JsonProcessingException {
+        List<ReportCsvColumn> csvList = reportService.csvExport(records);
         CsvMapper mapper = new CsvMapper();
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        CsvSchema schema = mapper.schemaFor(CsvColumn.class).withHeader();
+        CsvSchema schema = mapper.schemaFor(ReportCsvColumn.class).withHeader();
         return mapper.writer(schema).writeValueAsString(csvList);
     }
 

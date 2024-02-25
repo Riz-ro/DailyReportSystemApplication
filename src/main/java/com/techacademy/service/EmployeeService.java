@@ -1,34 +1,43 @@
 package com.techacademy.service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.entity.Employee;
-import com.techacademy.entity.Report;
+import com.techacademy.entity.Employee.Role;
+import com.techacademy.entity.EmployeeCSV;
+import com.techacademy.entity.EmployeeCsvColumn;
 import com.techacademy.repository.EmployeeRepository;
 
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ReportService reportService;
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder, ReportService reportService) {
+    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
-        this.reportService = reportService;
     }
 
     // 従業員保存
@@ -69,6 +78,8 @@ public class EmployeeService {
         employee.setUpdatedAt(now);
         employee.setDeleteFlg(true);
 
+        //// 従業員を削除したら対象従業員の日報削除…は現実的でないので日報は削除しない2024/02/25
+        /*
         // 削除対象の従業員（employee）に紐づいている、日報のリスト（reportList）を取得
         List<Report> reportList = reportService.findByEmployee(employee);
 
@@ -77,15 +88,14 @@ public class EmployeeService {
             // 日報（report）のIDを指定して、日報情報を削除
             reportService.delete(report.getId());
         }
-
-        /* 削除対象の従業員に紐づいている日報情報の削除：ここまで */
+        */
 
         return ErrorKinds.SUCCESS;
     }
 
     // 従業員更新
     @Transactional
-    public ErrorKinds update(String code ,Employee employee) {
+    public ErrorKinds update(String code, Employee employee) {
         // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
         // 更新用Employeeに更新元のデータを入れる
         Employee updateEmployee = findByCode(code);
@@ -120,6 +130,21 @@ public class EmployeeService {
     // 従業員一覧表示処理
     public List<Employee> findAll() {
         return employeeRepository.findAll();
+    }
+
+    // 従業員一覧表示処理＆削除フラグ検索
+    public List<Employee> findAllByDeleteFlgFalse() {
+        return employeeRepository.findAllByDeleteFlgFalse();
+    }
+
+    // 日報一覧表示処理ページング処理追加
+    public Page<Employee> findAll(Pageable pageable) {
+        return employeeRepository.findAll(pageable);
+    }
+
+    // 日報一覧表示処理ページング処理追加＆削除フラグ検索
+    public Page<Employee> findAllByDeleteFlgFalse(Pageable pageable) {
+        return employeeRepository.findAllByDeleteFlgFalse(pageable);
     }
 
     // 1件を検索
@@ -168,13 +193,82 @@ public class EmployeeService {
         return passwordLength < 8 || 16 < passwordLength;
     }
 
-    // CSV入力用
+    // ReportCSV入力用
     public Employee findByEmployee(String code) {
-            // findByIdで検索
-            Optional<Employee> option = employeeRepository.findById(code);
-            // 取得できなかった場合はnullを返す
-            Employee employee = option.orElse(null);
-            return employee;
+        // findByIdで検索
+        Optional<Employee> option = employeeRepository.findById(code);
+        // 取得できなかった場合はnullを返す
+        Employee employee = option.orElse(null);
+        return employee;
+    }
+
+    // CSV出力処理
+    public List<EmployeeCsvColumn> csvExport(EmployeeCSV records) throws JsonProcessingException {
+        List<EmployeeCsvColumn> csvList = new ArrayList<>();
+        for (int i = 0; i < records.getCode().size(); i++) {
+            String strEmployeeCreated = records.getEmployeeCreated().get(i).replace("-", "/").replace("T", " ");
+            int RClength = strEmployeeCreated.length();
+            if (RClength == 16) {
+                strEmployeeCreated = strEmployeeCreated + ":00";
+            }
+            String strEmployeeUpdated = records.getEmployeeUpdated().get(i).replace("-", "/").replace("T", " ");
+            int RUlength = strEmployeeUpdated.length();
+            if (RUlength == 16) {
+                strEmployeeUpdated = strEmployeeUpdated + ":00";
+            }
+            String strDeleteFlg = String.valueOf(records.getDeleteFlg().get(i));  // true or false
+            csvList.add(new EmployeeCsvColumn(records.getCode().get(i), records.getName().get(i),
+                    records.getRole().get(i), null, strEmployeeCreated, strEmployeeUpdated ,strDeleteFlg));
+        }
+        return csvList;
+    }
+
+    // CSV入力用
+    @Transactional
+    public void csvImport(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+
+            // 読み取ったCSVの行を入れるための変数を作成
+            String line;
+            // ヘッダーレコードを飛ばすためにあらかじめ１行だけ読み取っておく（ない場合は不要）
+            line = br.readLine();
+            // 行がNULL（CSVの値がなくなる）になるまで処理を繰り返す
+            while ((line = br.readLine()) != null) {
+                // Stringのsplitメソッドを使用してカンマごとに分割して配列にいれる
+                String[] csvSplit = line.split(",");
+                if (findByCode(csvSplit[0]) == null) {  // 新規登録
+                    Employee employee = new Employee();
+                    employee.setCode(csvSplit[0]);
+                    employee.setName(csvSplit[1]);
+                    String strRole = csvSplit[2];
+                    employee.setRole(Role.valueOf(strRole));
+                    if (csvSplit[3] != "") {
+                        employee.setPassword(csvSplit[3]);
+                    } else {
+                        employee.setPassword("testpass");
+                    }
+                    // 第一段階なのでパスワードチェックはせずにエンコーダーを通すのみ
+                    employee.setPassword(passwordEncoder.encode(employee.getPassword()));
+                    // 登録日時・更新日時は現在値を投入
+                    LocalDateTime now = LocalDateTime.now();
+                    employee.setCreatedAt(now);
+                    employee.setUpdatedAt(now);
+                    employee.setDeleteFlg(false);
+                    // 第一段階なのでエラー確認せずに登録まで進める
+                    employeeRepository.save(employee);
+                } else {    // 上書き登録
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // CSV入力用、登録済みのIDチェック ※使用していない
+    public boolean existsByCode(String code) {
+        return employeeRepository.existsByCode(code);
     }
 
 }

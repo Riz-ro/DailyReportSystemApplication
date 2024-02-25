@@ -1,7 +1,12 @@
 package com.techacademy.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,11 +17,20 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
 
 import com.techacademy.entity.Employee;
+import com.techacademy.entity.EmployeeCSV;
+import com.techacademy.entity.EmployeeCsvColumn;
 import com.techacademy.service.EmployeeService;
 import com.techacademy.service.UserDetail;
 
@@ -33,10 +47,15 @@ public class EmployeeController {
 
     // 従業員一覧画面
     @GetMapping
-    public String list(Model model) {
+    public String list(Model model, Pageable pageable) {
 
-        model.addAttribute("listSize", employeeService.findAll().size());
-        model.addAttribute("employeeList", employeeService.findAll());
+        Page<Employee> pageList = employeeService.findAllByDeleteFlgFalse(pageable);
+        // ビューに渡す際、Page型の変数をそのまま渡しても実装可能だが、記載が複雑になるのでレコード情報だけを別にわたすことで可読性があがる。
+        List<Employee> employeeList = pageList.getContent();
+        model.addAttribute("pages", pageList);
+        model.addAttribute("listSize", employeeService.findAllByDeleteFlgFalse().size());
+        model.addAttribute("employeeList", employeeList);
+        model.addAttribute("allEmployeeList", employeeService.findAll());
 
         return "employees/list";
     }
@@ -142,6 +161,25 @@ public class EmployeeController {
             return edit(code, model);
         }
 
+        return "redirect:/employees";
+    }
+
+    // CSV出力処理
+    @PostMapping(value = "/csvexport", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
+            + "; charset=UTF-8; Content-Disposition: attachment")
+    @ResponseBody
+    public Object csvExport(@ModelAttribute("csvForm") EmployeeCSV records) throws JsonProcessingException {
+        List<EmployeeCsvColumn> csvList = employeeService.csvExport(records);
+        CsvMapper mapper = new CsvMapper();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        CsvSchema schema = mapper.schemaFor(EmployeeCsvColumn.class).withHeader();
+        return mapper.writer(schema).writeValueAsString(csvList);
+    }
+
+    // CSV入力用
+    @PostMapping(value = "/csvimport")
+    public String csvImport(@RequestParam("file") MultipartFile file) {
+        employeeService.csvImport(file);
         return "redirect:/employees";
     }
 

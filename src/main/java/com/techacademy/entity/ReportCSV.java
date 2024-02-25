@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 
-public class CSV {
+public class ReportCSV {
     // ID
     List<Integer> id;
     // 社員コード

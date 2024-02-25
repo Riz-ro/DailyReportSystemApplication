@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @JsonPropertyOrder({"ID", "社員コード", "社員氏名", "日付", "タイトル", "内容", "登録日時", "更新日時"})
 
-public class CsvColumn {
+public class ReportCsvColumn {
     @JsonProperty("ID")
     private Integer id;
     @JsonProperty("社員コード")
@@ -27,9 +27,9 @@ public class CsvColumn {
     @JsonProperty("更新日時")
     private String reportUpdated;
 
-    public CsvColumn () {}
+    public ReportCsvColumn () {}
 
-    public CsvColumn (Integer id, String code, String name, String reportDate, String reportTitle, String reportContent, String reportCreated, String reportUpdated) {
+    public ReportCsvColumn (Integer id, String code, String name, String reportDate, String reportTitle, String reportContent, String reportCreated, String reportUpdated) {
       this.id = id;
       this.code = code;
       this.name = name;

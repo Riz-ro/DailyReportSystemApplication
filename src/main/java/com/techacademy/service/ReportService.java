@@ -19,8 +19,8 @@ import org.springframework.data.domain.Pageable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.techacademy.constants.ErrorKinds;
-import com.techacademy.entity.CSV;
-import com.techacademy.entity.CsvColumn;
+import com.techacademy.entity.ReportCSV;
+import com.techacademy.entity.ReportCsvColumn;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.repository.ReportRepository;
@@ -129,8 +129,8 @@ public class ReportService {
         return report;
     }
     // CSV出力処理
-    public List<CsvColumn> csvExport(CSV records) throws JsonProcessingException {
-        List<CsvColumn> csvList = new ArrayList<>();
+    public List<ReportCsvColumn> csvExport(ReportCSV records) throws JsonProcessingException {
+        List<ReportCsvColumn> csvList = new ArrayList<>();
         for (int i = 0; i < records.getId().size(); i++) {
             String strReportDate = records.getReportDate().get(i).replace("-", "/");
             String strReportCreated = records.getReportCreated().get(i).replace("-", "/").replace("T", " ");
@@ -143,7 +143,7 @@ public class ReportService {
             if (RUlength == 16) {
                 strReportUpdated = strReportUpdated + ":00";
             }
-            csvList.add(new CsvColumn(records.getId().get(i), records.getCode().get(i), records.getName().get(i),
+            csvList.add(new ReportCsvColumn(records.getId().get(i), records.getCode().get(i), records.getName().get(i),
                     strReportDate, records.getReportTitle().get(i), records.getReportContent().get(i),
                     strReportCreated, strReportUpdated));
         }

@@ -2,9 +2,9 @@
 package com.techacademy.entity;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.validator.constraints.Length;
 
 import jakarta.persistence.CascadeType;
@@ -21,7 +21,6 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "employees")
-@SQLRestriction("delete_flg = false")
 public class Employee {
 
 
@@ -76,4 +75,19 @@ public class Employee {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    public LocalDateTime getCreatedAt() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime date = createdAt;
+        String text = date.format(formatter);
+        LocalDateTime createdAt = LocalDateTime.parse(text, formatter);
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime date = updatedAt;
+        String text = date.format(formatter);
+        LocalDateTime updatedAt = LocalDateTime.parse(text, formatter);
+        return updatedAt;
+    }
 }
