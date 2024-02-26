@@ -258,6 +258,27 @@ public class EmployeeService {
                     // 第一段階なのでエラー確認せずに登録まで進める
                     employeeRepository.save(employee);
                 } else {    // 上書き登録
+                    // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
+                    // 更新用Employeeに更新元のデータを入れる
+                    Employee updateEmployee = findByCode(csvSplit[0]);
+                    updateEmployee.setName(csvSplit[1]);
+                    String strRole = csvSplit[2];
+                    updateEmployee.setRole(Role.valueOf(strRole));
+                    if (csvSplit[3] != "") {
+                        // 第一段階なのでパスワードチェックはせずにエンコーダーを通すのみ
+                        updateEmployee.setPassword(csvSplit[3]);
+                        updateEmployee.setPassword(passwordEncoder.encode(updateEmployee.getPassword()));
+                    } else {
+                        updateEmployee.setPassword(findByCode(csvSplit[0]).getPassword());
+                    }
+                    // 更新日時のみ現在値を投入
+                    LocalDateTime now = LocalDateTime.now();
+                    updateEmployee.setUpdatedAt(now);
+                    // 削除フラグ更新
+                    boolean booDeleteFlg = Boolean.valueOf(csvSplit[6]);  // true or false
+                    updateEmployee.setDeleteFlg(booDeleteFlg);
+                    // 更新用Employeeの内容で保存
+                    employeeRepository.save(updateEmployee);
                 }
             }
             br.close();
