@@ -178,9 +178,19 @@ public class EmployeeController {
 
     // CSV入力用
     @PostMapping(value = "/csvimport")
-    public String csvImport(@RequestParam("file") MultipartFile file) {
-        employeeService.csvImport(file);
-        return "redirect:/employees";
+    public String csvImport(@RequestParam("file") MultipartFile file, Model model) {
+        List<List<String>> resultList = employeeService.csvImport(file);
+        model.addAttribute("resultList", resultList);
+        model.addAttribute("listSize", resultList.size());
+
+        return "employees/resultlist";
+    }
+
+    // 従業員新規登録画面
+    @GetMapping(value = "/resultlist")
+    public String resultList(@ModelAttribute List<List<String>> resultList) {
+
+        return "employees/resultlist";
     }
 
 }

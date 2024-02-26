@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -225,7 +226,11 @@ public class EmployeeService {
 
     // CSV入力用
     @Transactional
-    public void csvImport(MultipartFile file) {
+    public List<List<String>> csvImport(MultipartFile file) {
+        // resultList作成用
+        List<List<String>> resultList = new ArrayList<List<String>>();
+        String passStatus,resultStatus;
+
         try (InputStream inputStream = file.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
 
@@ -233,10 +238,12 @@ public class EmployeeService {
             String line;
             // ヘッダーレコードを飛ばすためにあらかじめ１行だけ読み取っておく（ない場合は不要）
             line = br.readLine();
+
             // 行がNULL（CSVの値がなくなる）になるまで処理を繰り返す
             while ((line = br.readLine()) != null) {
                 // Stringのsplitメソッドを使用してカンマごとに分割して配列にいれる
                 String[] csvSplit = line.split(",");
+
                 if (findByCode(csvSplit[0]) == null) {  // 新規登録
                     Employee employee = new Employee();
                     employee.setCode(csvSplit[0]);
@@ -245,8 +252,10 @@ public class EmployeeService {
                     employee.setRole(Role.valueOf(strRole));
                     if (csvSplit[3] != "") {
                         employee.setPassword(csvSplit[3]);
+                        passStatus = "新規登録";
                     } else {
                         employee.setPassword("testpass");
+                        passStatus = "初期パスワード";
                     }
                     // 第一段階なのでパスワードチェックはせずにエンコーダーを通すのみ
                     employee.setPassword(passwordEncoder.encode(employee.getPassword()));
@@ -257,7 +266,8 @@ public class EmployeeService {
                     employee.setDeleteFlg(false);
                     // 第一段階なのでエラー確認せずに登録まで進める
                     employeeRepository.save(employee);
-                } else {    // 上書き登録
+                    resultStatus = "新規登録";
+                } else {    // 上書登録
                     // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
                     // 更新用Employeeに更新元のデータを入れる
                     Employee updateEmployee = findByCode(csvSplit[0]);
@@ -268,8 +278,10 @@ public class EmployeeService {
                         // 第一段階なのでパスワードチェックはせずにエンコーダーを通すのみ
                         updateEmployee.setPassword(csvSplit[3]);
                         updateEmployee.setPassword(passwordEncoder.encode(updateEmployee.getPassword()));
+                        passStatus = "変更あり";
                     } else {
                         updateEmployee.setPassword(findByCode(csvSplit[0]).getPassword());
+                        passStatus = "変更なし";
                     }
                     // 更新日時のみ現在値を投入
                     LocalDateTime now = LocalDateTime.now();
@@ -279,12 +291,18 @@ public class EmployeeService {
                     updateEmployee.setDeleteFlg(booDeleteFlg);
                     // 更新用Employeeの内容で保存
                     employeeRepository.save(updateEmployee);
+                    resultStatus = "上書登録";
                 }
+                // 社員番号・氏名・権限・パスワード変更有無・削除フラグ有無・登録結果
+                List<String> recordList = new ArrayList<>(Arrays.asList(csvSplit[0],csvSplit[1],csvSplit[2],passStatus,csvSplit[6],resultStatus));
+                resultList.add(recordList);
             }
             br.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return resultList;
     }
 
     // CSV入力用、登録済みのIDチェック ※使用していない
