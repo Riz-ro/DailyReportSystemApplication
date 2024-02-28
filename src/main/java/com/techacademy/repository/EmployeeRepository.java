@@ -12,5 +12,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
     Page<Employee> findAll(Pageable pageable);
     Page<Employee> findAllByDeleteFlgFalse(Pageable pageable);
     List<Employee> findAllByDeleteFlgFalse();
+    Page<Employee> findAllByDeleteFlgTrue(Pageable pageable);
+    List<Employee> findAllByDeleteFlgTrue();
     boolean existsByCode(String code);
 }

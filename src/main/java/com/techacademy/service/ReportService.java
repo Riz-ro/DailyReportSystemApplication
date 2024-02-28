@@ -1,12 +1,6 @@
 package com.techacademy.service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +20,6 @@ import com.techacademy.entity.Report;
 import com.techacademy.repository.ReportRepository;
 
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class ReportService {
@@ -148,49 +141,6 @@ public class ReportService {
                     strReportCreated, strReportUpdated));
         }
         return  csvList;
-    }
-
-    // CSV入力用
-    @Transactional
-    public void csvImport(MultipartFile file){
-        try (InputStream inputStream = file.getInputStream();
-                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
-
-            // 読み取ったCSVの行を入れるための変数を作成
-            String line;
-            // ヘッダーレコードを飛ばすためにあらかじめ１行だけ読み取っておく（ない場合は不要）
-            line = br.readLine();
-            // 行がNULL（CSVの値がなくなる）になるまで処理を繰り返す
-            while ((line = br.readLine()) != null) {
-                // Stringのsplitメソッドを使用してカンマごとに分割して配列にいれる
-                String[] csvSplit = line.split(",");
-                Report report = new Report();
-                report.setId(Integer.parseInt(csvSplit[0]));
-                Employee employee = new Employee();
-                employee.setCode(csvSplit[1]);
-                report.setEmployee(employee);
-                report.setReportDate(LocalDate.parse(csvSplit[3], DateTimeFormatter.ofPattern("yyyy/[]M/[]d")));
-                report.setTitle(csvSplit[4]);
-                report.setContent(csvSplit[5].replaceAll("^\"" , "").replaceAll("\"$" , ""));
-                String strReportCreated = csvSplit[6].replaceAll("^\"" , "").replaceAll("\"$" , "");
-                report.setCreatedAt(
-                        LocalDateTime.parse(strReportCreated, DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
-                String strReportUpdated = csvSplit[7].replaceAll("^\"" , "").replaceAll("\"$" , "");
-                report.setUpdatedAt(
-                        LocalDateTime.parse(strReportUpdated, DateTimeFormatter.ofPattern("yyyy/[]M/[]d []H:[]m:[]s")));
-                report.setDeleteFlg(false);
-                reportRepository.save(report);
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    // 日報インポート
-    @Transactional
-    public void save(Report report) {
-        Report importReport = report;
-        reportRepository.save(importReport);
     }
 
     // ログイン中のユーザー かつ 入力した日付 の日報データが日報テーブルにないかの確認

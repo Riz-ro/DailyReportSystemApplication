@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -175,13 +172,6 @@ public class ReportController {
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         CsvSchema schema = mapper.schemaFor(ReportCsvColumn.class).withHeader();
         return mapper.writer(schema).writeValueAsString(csvList);
-    }
-
-    // CSV入力用
-    @PostMapping(value = "/csvimport")
-    public String csvImport(@RequestParam("file") MultipartFile file) {
-        reportService.csvImport(file);
-        return "redirect:/reports";
     }
 
     // Word出力用

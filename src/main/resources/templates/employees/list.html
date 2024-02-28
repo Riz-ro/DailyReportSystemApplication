@@ -55,11 +55,14 @@
                                         <button type="submit" class="btn btn-primary">CSV出力</button>
                                     </form>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-5">
                                     <form th:action="@{/employees/csvimport}" method="post" enctype="multipart/form-data">
                                         <button type="submit" class="btn btn-primary">CSV入力</button>
                                         <input type="file" required name="file">
                                     </form>
+                                </div>
+                                <div class="col-3">
+                                    <a th:href="@{/employees/deletelist}" class="btn btn-primary">削除済一覧</a>
                                 </div>
                                 <div class="col">
                                     <!-- ページリンク -->

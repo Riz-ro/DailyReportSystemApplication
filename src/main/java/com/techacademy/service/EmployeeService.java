@@ -128,9 +128,29 @@ public class EmployeeService {
         return ErrorKinds.SUCCESS;
     }
 
+    // 削除済従業員削除取消
+    @Transactional
+    public void deleteUpdate(String code) {
+
+        Employee updateEmployee = findByCode(code);
+        updateEmployee.setDeleteFlg(false);
+
+        // 更新日時を現在日時に上書き
+        LocalDateTime now = LocalDateTime.now();
+        updateEmployee.setUpdatedAt(now);
+
+        // 更新用Employeeの内容で保存
+        employeeRepository.save(updateEmployee);
+    }
+
     // 従業員一覧表示処理
     public List<Employee> findAll() {
         return employeeRepository.findAll();
+    }
+
+    // 従業員一覧表示処理ページング処理追加
+    public Page<Employee> findAll(Pageable pageable) {
+        return employeeRepository.findAll(pageable);
     }
 
     // 従業員一覧表示処理＆削除フラグ検索
@@ -138,14 +158,19 @@ public class EmployeeService {
         return employeeRepository.findAllByDeleteFlgFalse();
     }
 
-    // 日報一覧表示処理ページング処理追加
-    public Page<Employee> findAll(Pageable pageable) {
-        return employeeRepository.findAll(pageable);
-    }
-
-    // 日報一覧表示処理ページング処理追加＆削除フラグ検索
+    // 従業員一覧表示処理ページング処理追加＆削除フラグ検索
     public Page<Employee> findAllByDeleteFlgFalse(Pageable pageable) {
         return employeeRepository.findAllByDeleteFlgFalse(pageable);
+    }
+
+    // 削除済従業員一覧表示処理
+    public List<Employee> findAllByDeleteFlgTrue() {
+        return employeeRepository.findAllByDeleteFlgTrue();
+    }
+
+    // 削除済み従業員一覧表示処理＆ページング処理
+    public Page<Employee> findAllByDeleteFlgTrue(Pageable pageable) {
+        return employeeRepository.findAllByDeleteFlgTrue(pageable);
     }
 
     // 1件を検索

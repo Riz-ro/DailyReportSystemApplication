@@ -193,4 +193,35 @@ public class EmployeeController {
         return "employees/resultlist";
     }
 
+    // 削除済従業員一覧画面
+    @GetMapping(value = "/deletelist")
+    public String deleteList(Model model, Pageable pageable) {
+
+        Page<Employee> pageList = employeeService.findAllByDeleteFlgTrue(pageable);
+        // ビューに渡す際、Page型の変数をそのまま渡しても実装可能だが、記載が複雑になるのでレコード情報だけを別にわたすことで可読性があがる。
+        List<Employee> employeeList = pageList.getContent();
+        model.addAttribute("pages", pageList);
+        model.addAttribute("listSize", employeeService.findAllByDeleteFlgTrue().size());
+        model.addAttribute("employeeList", employeeList);
+
+        return "employees/deletelist";
+    }
+
+    // 従業員詳細画面
+    @GetMapping(value = "/delete/{code}/")
+    public String deleteDetail(@PathVariable String code, Model model) {
+
+        model.addAttribute("employee", employeeService.findByCode(code));
+        return "employees/deletedetail";
+    }
+
+    // 削除済従業員取消処理
+    @GetMapping(value = "/delete/{code}/deleteupdate")
+    public String deleteUpdate(Model model, @PathVariable String code) {
+
+        employeeService.deleteUpdate(code);
+
+        return "redirect:/employees/deletelist";
+    }
+
 }
