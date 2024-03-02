@@ -1,0 +1,9 @@
+version 1.0
+@totalColumns 7
+code: length(*, 10)
+name: length(*, 20)
+role: is("GENERAL") or is("ADMIN")
+password: length(*, 255) or empty
+createdAt:
+updatedAt:
+deleteFlg: is("true") or is("false") or empty

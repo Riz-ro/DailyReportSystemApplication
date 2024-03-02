@@ -59,6 +59,7 @@
                                     <form th:action="@{/employees/csvimport}" method="post" enctype="multipart/form-data">
                                         <button type="submit" class="btn btn-primary">CSV入力</button>
                                         <input type="file" required name="file">
+                                        <p class="text-danger" th:text="${errorMessage}">
                                     </form>
                                 </div>
                                 <div class="col-3">

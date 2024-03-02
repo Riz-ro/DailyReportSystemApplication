@@ -21,21 +21,26 @@
                                     <thead>
                                         <tr>
                                             <th>社員番号</th>
-                                            <th>氏名</th>
-                                            <th>権限</th>
+                                            <th>氏名（更新前）</th>
+                                            <th>（更新）</th>
+                                            <th>権限（更新前）</th>
+                                            <th>（更新）</th>
                                             <th>パスワード</th>
-                                            <th>削除フラグ</th>
+                                            <th>削除状態</th>
                                             <th>登録結果</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr th:each="result:${resultList}">
-                                            <td class="align-middle" th:text="${result.get(0)}"></td>
-                                            <td class="align-middle" th:text="${result.get(1)}"></td>
-                                            <td class="align-middle" th:text="${result.get(2)}"></td>
-                                            <td class="align-middle" th:text="${result.get(3)}"></td>
-                                            <td class="align-middle" th:text="${result.get(4) == 'false'} ? '' : '削除状態'"></td>
-                                            <td class="align-middle" th:text="${result.get(5)}"></td>
+                                            <td class="align-middle" th:text="${result.code}"></td>
+                                            <td class="align-middle" th:text="${result.formerName}"></td>
+                                            <td class="align-middle" th:text="${result.name}"></td>
+                                            <td class="align-middle" th:text="${result.formerRole}"></td>
+                                            <td class="align-middle" th:text="${result.role}"></td>
+                                            <td class="align-middle" th:text="${result.passStatus}"></td>
+                                            <td class="align-middle" th:text="${result.deleteStatus}"></td>
+                                            <!-- <td class="align-middle" th:text="${result.deleteFlg == false} ? '' : '削除状態'"></td> -->
+                                            <td class="align-middle" th:text="${result.resultStatus}"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -47,6 +52,7 @@
                             <div class="row">
                                 <div class="col-2">
                                 <a th:href="@{/employees}" class="btn btn-primary">戻る</a>
+                                <a th:href="@{/employees/importaction}" class="btn btn-primary">一括登録実行</a>
                                 </div>
                             </div>
                         </div>

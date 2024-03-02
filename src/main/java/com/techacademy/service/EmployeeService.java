@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +23,9 @@ import com.techacademy.entity.Employee;
 import com.techacademy.entity.Employee.Role;
 import com.techacademy.entity.EmployeeCSV;
 import com.techacademy.entity.EmployeeCsvColumn;
+import com.techacademy.entity.EmployeeTemporary;
 import com.techacademy.repository.EmployeeRepository;
+import com.techacademy.repository.EmployeeTemporaryRepository;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,11 +34,14 @@ import org.springframework.web.multipart.MultipartFile;
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final EmployeeTemporaryRepository employeeTemporaryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
+    public EmployeeService(EmployeeRepository employeeRepository,
+            EmployeeTemporaryRepository employeeTemporaryRepository, PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
+        this.employeeTemporaryRepository = employeeTemporaryRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -81,15 +85,12 @@ public class EmployeeService {
 
         //// 従業員を削除したら対象従業員の日報削除…は現実的でないので日報は削除しない2024/02/25
         /*
-        // 削除対象の従業員（employee）に紐づいている、日報のリスト（reportList）を取得
-        List<Report> reportList = reportService.findByEmployee(employee);
-
-        // 日報のリスト（reportList）を拡張for文を使って繰り返し
-        for (Report report : reportList) {
-            // 日報（report）のIDを指定して、日報情報を削除
-            reportService.delete(report.getId());
-        }
-        */
+         * // 削除対象の従業員（employee）に紐づいている、日報のリスト（reportList）を取得 List<Report> reportList =
+         * reportService.findByEmployee(employee);
+         *
+         * // 日報のリスト（reportList）を拡張for文を使って繰り返し for (Report report : reportList) { //
+         * 日報（report）のIDを指定して、日報情報を削除 reportService.delete(report.getId()); }
+         */
 
         return ErrorKinds.SUCCESS;
     }
@@ -242,19 +243,37 @@ public class EmployeeService {
             if (RUlength == 16) {
                 strEmployeeUpdated = strEmployeeUpdated + ":00";
             }
-            String strDeleteFlg = String.valueOf(records.getDeleteFlg().get(i));  // true or false
+            String strDeleteFlg = String.valueOf(records.getDeleteFlg().get(i)); // true or false
             csvList.add(new EmployeeCsvColumn(records.getCode().get(i), records.getName().get(i),
-                    records.getRole().get(i), null, strEmployeeCreated, strEmployeeUpdated ,strDeleteFlg));
+                    records.getRole().get(i), null, strEmployeeCreated, strEmployeeUpdated, strDeleteFlg));
         }
         return csvList;
     }
 
+    // CSV一括登録実行
+    @Transactional
+    public void importAction() {
+        List<EmployeeTemporary> temporaryList = employeeTemporaryRepository.findAll();
+        for(EmployeeTemporary temporary : temporaryList) {
+            if (temporary.isUpdateFlg()) {
+                Employee employee = new Employee();
+                employee.setCode(temporary.getCode());
+                employee.setName(temporary.getName());
+                employee.setRole(temporary.getRole());
+                employee.setPassword(temporary.getPassword());
+                employee.setDeleteFlg(temporary.isDeleteFlg());
+                employee.setCreatedAt(temporary.getCreatedAt());
+                employee.setUpdatedAt(temporary.getUpdatedAt());
+                employeeRepository.save(employee);
+            }
+        }
+    }
+
     // CSV入力用
     @Transactional
-    public List<List<String>> csvImport(MultipartFile file) {
-        // resultList作成用
-        List<List<String>> resultList = new ArrayList<List<String>>();
-        String passStatus,resultStatus;
+    public void csvImport(MultipartFile file) {
+        String passStatus, resultStatus, deleteStatus;
+        boolean csvFlg; // レコード更新判定用
 
         try (InputStream inputStream = file.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
@@ -268,66 +287,133 @@ public class EmployeeService {
             while ((line = br.readLine()) != null) {
                 // Stringのsplitメソッドを使用してカンマごとに分割して配列にいれる
                 String[] csvSplit = line.split(",");
+                // 各ステータス＆フラグ初期化
+                passStatus = "";
+                resultStatus = "";
+                deleteStatus = "";
+                csvFlg = false; // trueで登録不可
 
-                if (findByCode(csvSplit[0]) == null) {  // 新規登録
-                    Employee employee = new Employee();
-                    employee.setCode(csvSplit[0]);
-                    employee.setName(csvSplit[1]);
-                    String strRole = csvSplit[2];
-                    employee.setRole(Role.valueOf(strRole));
-                    if (csvSplit[3] != "") {
-                        employee.setPassword(csvSplit[3]);
-                        passStatus = "新規登録";
-                    } else {
-                        employee.setPassword("testpass");
-                        passStatus = "初期パスワード";
+                // CSV内容チェック（チェックだけなのでコード・名前・権限・パスワードのみ）
+                Employee csvEmployee = new Employee();
+                csvEmployee.setCode(csvSplit[0]);
+                csvEmployee.setName(csvSplit[1]);
+                String strRole = csvSplit[2];
+                csvEmployee.setRole(Role.valueOf(strRole));
+                csvEmployee.setPassword(csvSplit[3]);
+                if (csvSplit[3] != "") {
+                    //// パスワードチェック
+                    ErrorKinds result = employeePasswordCheck(csvEmployee);
+                    if (ErrorKinds.CHECK_OK != result) {
+                        csvFlg = true;
+                        passStatus = "パスワードエラー";
+                        resultStatus = "登録不可（パスワードエラー）";
                     }
-                    // 第一段階なのでパスワードチェックはせずにエンコーダーを通すのみ
-                    employee.setPassword(passwordEncoder.encode(employee.getPassword()));
+                }
+                //// CSV内容をresultListに登録
+                EmployeeTemporary employeeTemporary = new EmployeeTemporary();
+                employeeTemporary.setCode(csvEmployee.getCode());
+                employeeTemporary.setName(csvEmployee.getName());
+                employeeTemporary.setRole(csvEmployee.getRole());
+                employeeTemporary.setPassword(csvEmployee.getPassword());
+                employeeTemporary.setDeleteFlg(Boolean.valueOf(csvSplit[6]));
+                employeeTemporary.setCsvFlg(csvFlg);
+                employeeTemporary.setSameFlg(false);
+                employeeTemporary.setUpdateFlg(false);
+                employeeTemporary.setNameChangeFlg(false);
+                employeeTemporary.setRoleChangeFlg(false);
+                employeeTemporary.setPassChangeFlg(false);
+                employeeTemporary.setDeleteFlgChangeFlg(false);
+                employeeTemporary.setResultStatus(resultStatus);
+                employeeTemporary.setPassStatus(passStatus);
+                employeeTemporary.setDeleteStatus(deleteStatus);
+                //// 新規レコードor上書レコードチェック
+                ////// 新規レコード
+                if (findByCode(employeeTemporary.getCode()) == null) {
+                    if (employeeTemporary.getPassword() != "") {
+                        // 入力チェック済のためエンコーダー通してset
+                        employeeTemporary.setPassword(passwordEncoder.encode(employeeTemporary.getPassword()));
+                    } else {
+                        employeeTemporary.setCsvFlg(true); // パスワード空欄エラー登録不可
+                        employeeTemporary.setResultStatus("登録不可（パスワード空欄）");
+                        employeeTemporary.setPassStatus("空欄エラー");
+                    }
                     // 登録日時・更新日時は現在値を投入
                     LocalDateTime now = LocalDateTime.now();
-                    employee.setCreatedAt(now);
-                    employee.setUpdatedAt(now);
-                    employee.setDeleteFlg(false);
-                    // 第一段階なのでエラー確認せずに登録まで進める
-                    employeeRepository.save(employee);
-                    resultStatus = "新規登録";
-                } else {    // 上書登録
-                    // フィールド(code,[name],[role],[[password]],delete_flg,created_at,[updated_at])
-                    // 更新用Employeeに更新元のデータを入れる
-                    Employee updateEmployee = findByCode(csvSplit[0]);
-                    updateEmployee.setName(csvSplit[1]);
-                    String strRole = csvSplit[2];
-                    updateEmployee.setRole(Role.valueOf(strRole));
-                    if (csvSplit[3] != "") {
-                        // 第一段階なのでパスワードチェックはせずにエンコーダーを通すのみ
-                        updateEmployee.setPassword(csvSplit[3]);
-                        updateEmployee.setPassword(passwordEncoder.encode(updateEmployee.getPassword()));
-                        passStatus = "変更あり";
+                    employeeTemporary.setCreatedAt(now);
+                    employeeTemporary.setUpdatedAt(now);
+                    employeeTemporary.setDeleteFlg(Boolean.valueOf(csvSplit[6]));
+                    if (csvFlg) {
                     } else {
-                        updateEmployee.setPassword(findByCode(csvSplit[0]).getPassword());
+                        employeeTemporary.setResultStatus("新規登録");
+                        employeeTemporary.setUpdateFlg(true);
+                    }
+                    ////// 上書レコード
+                } else {
+                    Employee formerEmployee = findByCode(employeeTemporary.getCode());
+                    employeeTemporary.setSameFlg(true);
+                    // 名前比較
+                    employeeTemporary.setFormerName(formerEmployee.getName());
+                    if (!(formerEmployee.getName().equals(employeeTemporary.getName()))) {
+                        employeeTemporary.setNameChangeFlg(true);
+                        employeeTemporary.setSameFlg(false);
+                    }
+                    employeeTemporary.setFormerRole(formerEmployee.getRole());
+                    if (!(formerEmployee.getRole().equals(employeeTemporary.getRole()))) {
+                        employeeTemporary.setRoleChangeFlg(true);
+                        employeeTemporary.setSameFlg(false);
+                    }
+                    if (!(formerEmployee.isDeleteFlg() == employeeTemporary.isDeleteFlg())) {
+                        employeeTemporary.setDeleteFlgChangeFlg(true);
+                        employeeTemporary.setSameFlg(false);
+                        if (employeeTemporary.isDeleteFlg()) {
+                            employeeTemporary.setDeleteStatus("変更あり（削除）");
+                        } else {
+                            employeeTemporary.setDeleteStatus("変更あり（削除取消）");
+                        }
+                    } else if (employeeTemporary.isDeleteFlg()) {
+                        employeeTemporary.setDeleteStatus("変更なし（削除状態）");
+                    } else {
+                        employeeTemporary.setDeleteStatus("変更なし");
+                    }
+                    if (employeeTemporary.getPassword() != "") {
+                        // 入力チェック済のためエンコーダー通してset
+                        employeeTemporary.setPassword(passwordEncoder.encode(employeeTemporary.getPassword()));
+                        if (!(formerEmployee.getPassword().equals(employeeTemporary.getPassword()))) {
+                            employeeTemporary.setPassChangeFlg(true);
+                            employeeTemporary.setSameFlg(false);
+                            employeeTemporary.setPassStatus("パスワード変更");
+                        }
+                    } else { // 空欄なら登録済みパスワードをset
+                        employeeTemporary.setPassword(formerEmployee.getPassword());
                         passStatus = "変更なし";
                     }
                     // 更新日時のみ現在値を投入
                     LocalDateTime now = LocalDateTime.now();
-                    updateEmployee.setUpdatedAt(now);
-                    // 削除フラグ更新
-                    boolean booDeleteFlg = Boolean.valueOf(csvSplit[6]);  // true or false
-                    updateEmployee.setDeleteFlg(booDeleteFlg);
-                    // 更新用Employeeの内容で保存
-                    employeeRepository.save(updateEmployee);
-                    resultStatus = "上書登録";
+                    employeeTemporary.setCreatedAt(formerEmployee.getCreatedAt());
+                    employeeTemporary.setUpdatedAt(now);
+
+                    if (employeeTemporary.isSameFlg()) {
+                        employeeTemporary.setResultStatus("更新スキップ（変更なし）");
+                    } else {
+                        employeeTemporary.setResultStatus("上書登録");
+                        employeeTemporary.setUpdateFlg(true);
+                    }
                 }
-                // 社員番号・氏名・権限・パスワード変更有無・削除フラグ有無・登録結果
-                List<String> recordList = new ArrayList<>(Arrays.asList(csvSplit[0],csvSplit[1],csvSplit[2],passStatus,csvSplit[6],resultStatus));
-                resultList.add(recordList);
+                // save
+                employeeTemporaryRepository.save(employeeTemporary);
             }
             br.close();
 
-        } catch (IOException e) {
+        } catch (
+
+        IOException e) {
             e.printStackTrace();
         }
-        return resultList;
+    }
+
+    // 従業員一覧表示処理
+    public List<EmployeeTemporary> findAllTemporary() {
+        return employeeTemporaryRepository.findAll();
     }
 
     // CSV入力用、登録済みのIDチェック ※使用していない

@@ -1,5 +1,6 @@
 package com.techacademy.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,11 @@ import com.techacademy.entity.EmployeeCSV;
 import com.techacademy.entity.EmployeeCsvColumn;
 import com.techacademy.service.EmployeeService;
 import com.techacademy.service.UserDetail;
+
+import uk.gov.nationalarchives.csv.validator.api.java.CsvValidator;
+import uk.gov.nationalarchives.csv.validator.api.java.FailMessage;
+import uk.gov.nationalarchives.csv.validator.api.java.Substitution;
+import uk.gov.nationalarchives.csv.validator.api.java.WarningMessage;
 
 @Controller
 @RequestMapping("employees")
@@ -178,19 +184,50 @@ public class EmployeeController {
 
     // CSV入力用
     @PostMapping(value = "/csvimport")
-    public String csvImport(@RequestParam("file") MultipartFile file, Model model) {
-        List<List<String>> resultList = employeeService.csvImport(file);
-        model.addAttribute("resultList", resultList);
-        model.addAttribute("listSize", resultList.size());
+    public String csvImport(@RequestParam("file") MultipartFile file, Model model, Pageable pageable) {
+        // CSV入力チェック
+        List<Substitution> pathSubstitutions = new ArrayList<>();
+        // 未処理：importFileを下記フォルダに格納させる処理を追加させる
+        List<FailMessage> messages = CsvValidator.validate(
+                "src/main/resources/files/csvexport.csv",
+                "src/main/resources/files/data-schema.csvs", // CSVスキーマファイル
+                false, // 最初にエラーが発生したら処理を中断するか
+                pathSubstitutions, // ファイルパスの格納用
+                true // ファイルパスの厳格なチェック
+                );
+        if (messages.isEmpty()) {
+            System.out.println("Completed validation OK");
+        } else {
+            for (FailMessage message : messages) {
+                if (message instanceof WarningMessage) {
+                    System.out.println("[WARN] " + message.getMessage());
+                } else {
+                    System.out.println("[ERROR] " + message.getMessage());
+                }
+                model.addAttribute("errorMessage",  "CSVデータ内容に問題があるため登録できません：" + message.getMessage());
+                return list(model, pageable);
+            }
+        }
+        // 入力チェック後インポート処理
+        employeeService.csvImport(file);
+        model.addAttribute("resultList", employeeService.findAllTemporary());
+        model.addAttribute("listSize", employeeService.findAllTemporary().size());
 
         return "employees/resultlist";
     }
 
-    // 従業員新規登録画面
+    // CSV入力結果確認画面
     @GetMapping(value = "/resultlist")
     public String resultList(@ModelAttribute List<List<String>> resultList) {
 
         return "employees/resultlist";
+    }
+
+    // CSV一括登録実行
+    @GetMapping(value = "/importaction")
+    public String importAction() {
+        employeeService.importAction();
+        return "redirect:/employees";
     }
 
     // 削除済従業員一覧画面
@@ -207,7 +244,7 @@ public class EmployeeController {
         return "employees/deletelist";
     }
 
-    // 従業員詳細画面
+    // 削除従業員詳細画面
     @GetMapping(value = "/delete/{code}/")
     public String deleteDetail(@PathVariable String code, Model model) {
 
